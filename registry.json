@@ -8,7 +8,7 @@
       "outputs": ["i64"],
       "implementation": "vm_op_add",
       "permissions": [],
-      "test_status": "verified",
+      "test_status": "pending",
       "tests": ["add_positive", "add_negative", "add_zero", "overflow_rejected"]
     }
   ]
