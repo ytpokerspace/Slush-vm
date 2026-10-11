@@ -1,0 +1,1778 @@
+{
+  "schema_version": "1.0.0",
+  "project": "SHUSHOS",
+  "purpose": "Emoji-native aliases for canonical language, platform, and command concepts. Emoji are surface syntax; canonical IDs carry semantic identity.",
+  "resolution_rules": [
+    "Resolve aliases only inside a declared grammar or namespace.",
+    "If an alias maps to multiple canonical IDs in the active context, fail with E_ALIAS_AMBIGUOUS.",
+    "Never silently select an incompatible implementation.",
+    "Canonical IDs are stable; display symbols may change.",
+    "Platform-specific entries must declare their platform."
+  ],
+  "entries": [
+    {
+      "id": "language.comment",
+      "symbol": "🫥",
+      "category": "language",
+      "meaning": "Comment/no-op marker; line/block extent must be specified.",
+      "platform": "portable"
+    },
+    {
+      "id": "language.function",
+      "symbol": "🤫",
+      "category": "language",
+      "meaning": "Function or wrapper marker; currently overloaded.",
+      "platform": "portable"
+    },
+    {
+      "id": "runtime.identity",
+      "symbol": "🧠",
+      "category": "language",
+      "meaning": "Runtime identity.",
+      "platform": "portable"
+    },
+    {
+      "id": "language.let",
+      "symbol": "📦",
+      "category": "language",
+      "meaning": "Binding; symbol collides with package/object concepts.",
+      "platform": "portable"
+    },
+    {
+      "id": "language.assign",
+      "symbol": "🟰",
+      "category": "language",
+      "meaning": "Assignment/reassignment.",
+      "platform": "portable"
+    },
+    {
+      "id": "language.if",
+      "symbol": "🤔",
+      "category": "language",
+      "meaning": "Conditional.",
+      "platform": "portable"
+    },
+    {
+      "id": "language.then",
+      "symbol": "➡",
+      "category": "language",
+      "meaning": "Then branch.",
+      "platform": "portable"
+    },
+    {
+      "id": "language.else",
+      "symbol": "⬅",
+      "category": "language",
+      "meaning": "Else branch.",
+      "platform": "portable"
+    },
+    {
+      "id": "language.end",
+      "symbol": "🔚",
+      "category": "language",
+      "meaning": "Construct terminator.",
+      "platform": "portable"
+    },
+    {
+      "id": "language.while",
+      "symbol": "🔁",
+      "category": "language",
+      "meaning": "Loop.",
+      "platform": "portable"
+    },
+    {
+      "id": "language.param",
+      "symbol": "📥",
+      "category": "language",
+      "meaning": "Parameter.",
+      "platform": "portable"
+    },
+    {
+      "id": "language.return",
+      "symbol": "👉",
+      "category": "language",
+      "meaning": "Return.",
+      "platform": "portable"
+    },
+    {
+      "id": "language.print",
+      "symbol": "📤",
+      "category": "language",
+      "meaning": "Print.",
+      "platform": "portable"
+    },
+    {
+      "id": "language.halt",
+      "symbol": "🛑",
+      "category": "language",
+      "meaning": "VM halt; distinct from OS halt.",
+      "platform": "portable"
+    },
+    {
+      "id": "type.number",
+      "symbol": "🔢",
+      "category": "type",
+      "meaning": "Numeric value.",
+      "platform": "portable"
+    },
+    {
+      "id": "type.string",
+      "symbol": "🔤",
+      "category": "type",
+      "meaning": "String value/delimiter; grammar must disambiguate.",
+      "platform": "portable"
+    },
+    {
+      "id": "type.true",
+      "symbol": "😀",
+      "category": "type",
+      "meaning": "Boolean true.",
+      "platform": "portable"
+    },
+    {
+      "id": "type.false",
+      "symbol": "😞",
+      "category": "type",
+      "meaning": "Boolean false.",
+      "platform": "portable"
+    },
+    {
+      "id": "type.nil",
+      "symbol": "🕳",
+      "category": "type",
+      "meaning": "Nil/null.",
+      "platform": "portable"
+    },
+    {
+      "id": "type.list",
+      "symbol": "📚",
+      "category": "type",
+      "meaning": "List; symbol also means registry/docs.",
+      "platform": "portable"
+    },
+    {
+      "id": "type.map",
+      "symbol": "🗺",
+      "category": "type",
+      "meaning": "Map.",
+      "platform": "portable"
+    },
+    {
+      "id": "type.function",
+      "symbol": "🤫",
+      "category": "type",
+      "meaning": "Function value; collides with wrapper.",
+      "platform": "portable"
+    },
+    {
+      "id": "operator.add",
+      "symbol": "➕",
+      "category": "operator",
+      "meaning": "Addition.",
+      "platform": "portable"
+    },
+    {
+      "id": "operator.sub",
+      "symbol": "➖",
+      "category": "operator",
+      "meaning": "Subtraction.",
+      "platform": "portable"
+    },
+    {
+      "id": "operator.mul",
+      "symbol": "✖",
+      "category": "operator",
+      "meaning": "Multiplication.",
+      "platform": "portable"
+    },
+    {
+      "id": "operator.div",
+      "symbol": "➗",
+      "category": "operator",
+      "meaning": "Division; define division by zero.",
+      "platform": "portable"
+    },
+    {
+      "id": "operator.mod",
+      "symbol": "🔢",
+      "category": "operator",
+      "meaning": "Modulo; collides with numeric type.",
+      "platform": "portable"
+    },
+    {
+      "id": "operator.gt",
+      "symbol": "⬆",
+      "category": "operator",
+      "meaning": "Greater than.",
+      "platform": "portable"
+    },
+    {
+      "id": "operator.lt",
+      "symbol": "⬇",
+      "category": "operator",
+      "meaning": "Less than.",
+      "platform": "portable"
+    },
+    {
+      "id": "operator.gte",
+      "symbol": "⏫",
+      "category": "operator",
+      "meaning": "Greater than or equal.",
+      "platform": "portable"
+    },
+    {
+      "id": "operator.lte",
+      "symbol": "⏬",
+      "category": "operator",
+      "meaning": "Less than or equal.",
+      "platform": "portable"
+    },
+    {
+      "id": "operator.eq",
+      "symbol": "⚖",
+      "category": "operator",
+      "meaning": "Equality.",
+      "platform": "portable"
+    },
+    {
+      "id": "operator.neq",
+      "symbol": "🚫🟰",
+      "category": "operator",
+      "meaning": "Inequality.",
+      "platform": "portable"
+    },
+    {
+      "id": "operator.and",
+      "symbol": "🎯",
+      "category": "operator",
+      "meaning": "Logical AND; define short-circuit semantics.",
+      "platform": "portable"
+    },
+    {
+      "id": "operator.or",
+      "symbol": "🔀",
+      "category": "operator",
+      "meaning": "Logical OR; symbol collides with diff.",
+      "platform": "portable"
+    },
+    {
+      "id": "operator.not",
+      "symbol": "🚫",
+      "category": "operator",
+      "meaning": "Logical NOT.",
+      "platform": "portable"
+    },
+    {
+      "id": "operator.ternary",
+      "symbol": "❓",
+      "category": "operator",
+      "meaning": "Conditional expression.",
+      "platform": "portable"
+    },
+    {
+      "id": "compiler.lex",
+      "symbol": "🌊",
+      "category": "compiler",
+      "meaning": "Lexing stage; symbol also means stream.",
+      "platform": "portable"
+    },
+    {
+      "id": "compiler.parse",
+      "symbol": "📐",
+      "category": "compiler",
+      "meaning": "Parsing stage.",
+      "platform": "portable"
+    },
+    {
+      "id": "compiler.ast",
+      "symbol": "🗂",
+      "category": "compiler",
+      "meaning": "Abstract syntax tree.",
+      "platform": "portable"
+    },
+    {
+      "id": "compiler.compile",
+      "symbol": "🅲",
+      "category": "compiler",
+      "meaning": "Compilation stage.",
+      "platform": "portable"
+    },
+    {
+      "id": "vm.execute",
+      "symbol": "🧩",
+      "category": "vm",
+      "meaning": "VM execution; symbol collides with Windows SYSTEM subkey.",
+      "platform": "portable"
+    },
+    {
+      "id": "vm.instruction",
+      "symbol": "🅸",
+      "category": "vm",
+      "meaning": "Instruction representation.",
+      "platform": "portable"
+    },
+    {
+      "id": "vm.frame",
+      "symbol": "🅵",
+      "category": "vm",
+      "meaning": "Call frame.",
+      "platform": "portable"
+    },
+    {
+      "id": "control.tool",
+      "symbol": "🆃",
+      "category": "control",
+      "meaning": "Tool definition.",
+      "platform": "portable"
+    },
+    {
+      "id": "control.registry",
+      "symbol": "🆁🅶",
+      "category": "control",
+      "meaning": "Capability registry.",
+      "platform": "portable"
+    },
+    {
+      "id": "control.capability",
+      "symbol": "🅲🅿",
+      "category": "control",
+      "meaning": "Capability contract.",
+      "platform": "portable"
+    },
+    {
+      "id": "control.policy",
+      "symbol": "🅿🅻",
+      "category": "control",
+      "meaning": "Policy.",
+      "platform": "portable"
+    },
+    {
+      "id": "control.sandbox",
+      "symbol": "🆂🅱",
+      "category": "control",
+      "meaning": "Sandbox.",
+      "platform": "portable"
+    },
+    {
+      "id": "control.audit",
+      "symbol": "🅰🆄",
+      "category": "control",
+      "meaning": "Audit log.",
+      "platform": "portable"
+    },
+    {
+      "id": "control.trace_id",
+      "symbol": "🆃🆁",
+      "category": "control",
+      "meaning": "Trace ID; distinguish traceroute and syscall trace.",
+      "platform": "portable"
+    },
+    {
+      "id": "control.validate",
+      "symbol": "🆅🅰",
+      "category": "control",
+      "meaning": "Validation.",
+      "platform": "portable"
+    },
+    {
+      "id": "control.execute",
+      "symbol": "🅴🆇",
+      "category": "control",
+      "meaning": "Execute capability.",
+      "platform": "portable"
+    },
+    {
+      "id": "control.resource_limit",
+      "symbol": "🆁🅻",
+      "category": "control",
+      "meaning": "Resource limit.",
+      "platform": "portable"
+    },
+    {
+      "id": "control.timeout",
+      "symbol": "🆃🅾",
+      "category": "control",
+      "meaning": "Timeout.",
+      "platform": "portable"
+    },
+    {
+      "id": "diagnostics.warning",
+      "symbol": "⚠",
+      "category": "diagnostics",
+      "meaning": "Warning/nonfatal diagnostic.",
+      "platform": "portable"
+    },
+    {
+      "id": "diagnostics.fatal",
+      "symbol": "🆘",
+      "category": "diagnostics",
+      "meaning": "Fatal diagnostic.",
+      "platform": "portable"
+    },
+    {
+      "id": "diagnostics.record",
+      "symbol": "🧾",
+      "category": "diagnostics",
+      "meaning": "Structured record.",
+      "platform": "portable"
+    },
+    {
+      "id": "diagnostics.span",
+      "symbol": "📍",
+      "category": "diagnostics",
+      "meaning": "Source/execution span; symbol also used for pwd.",
+      "platform": "portable"
+    },
+    {
+      "id": "diagnostics.error_code",
+      "symbol": "🆔",
+      "category": "diagnostics",
+      "meaning": "Stable error code.",
+      "platform": "portable"
+    },
+    {
+      "id": "runtime.error.recover",
+      "symbol": "🧯",
+      "category": "diagnostics",
+      "meaning": "Recover/catch eligible errors.",
+      "platform": "portable"
+    },
+    {
+      "id": "runtime.error.handler",
+      "symbol": "🩹",
+      "category": "diagnostics",
+      "meaning": "Error handler; symbol also used for syscall tracing.",
+      "platform": "portable"
+    },
+    {
+      "id": "windows.error.hresult",
+      "symbol": "🅷🆁",
+      "category": "diagnostics",
+      "meaning": "HRESULT domain.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.error.ntstatus",
+      "symbol": "🅽🆃",
+      "category": "diagnostics",
+      "meaning": "NTSTATUS domain.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.error.win32",
+      "symbol": "🆆32",
+      "category": "diagnostics",
+      "meaning": "Win32 error domain.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.diagnostics.etw",
+      "symbol": "🅴🆃",
+      "category": "diagnostics",
+      "meaning": "Event Tracing for Windows.",
+      "platform": "windows"
+    },
+    {
+      "id": "diagnostics.crash_dump",
+      "symbol": "📄",
+      "category": "diagnostics",
+      "meaning": "Crash dump; symbol also means file/text.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "filesystem.list",
+      "symbol": "📋",
+      "category": "filesystem",
+      "meaning": "List directory entries.",
+      "platform": "portable"
+    },
+    {
+      "id": "filesystem.chdir",
+      "symbol": "🚪",
+      "category": "filesystem",
+      "meaning": "Change directory.",
+      "platform": "portable"
+    },
+    {
+      "id": "filesystem.pwd",
+      "symbol": "📍",
+      "category": "filesystem",
+      "meaning": "Print working directory.",
+      "platform": "portable"
+    },
+    {
+      "id": "filesystem.read",
+      "symbol": "📖",
+      "category": "filesystem",
+      "meaning": "Read contents.",
+      "platform": "portable"
+    },
+    {
+      "id": "filesystem.create",
+      "symbol": "✨",
+      "category": "filesystem",
+      "meaning": "Create file/resource; define exact behavior.",
+      "platform": "portable"
+    },
+    {
+      "id": "filesystem.mkdir",
+      "symbol": "📁",
+      "category": "filesystem",
+      "meaning": "Create directory.",
+      "platform": "portable"
+    },
+    {
+      "id": "filesystem.remove",
+      "symbol": "🗑",
+      "category": "filesystem",
+      "meaning": "Remove; recursive behavior must be explicit.",
+      "platform": "portable"
+    },
+    {
+      "id": "filesystem.copy",
+      "symbol": "📋→",
+      "category": "filesystem",
+      "meaning": "Copy file/tree.",
+      "platform": "portable"
+    },
+    {
+      "id": "filesystem.move",
+      "symbol": "➡📦",
+      "category": "filesystem",
+      "meaning": "Move/rename.",
+      "platform": "portable"
+    },
+    {
+      "id": "filesystem.link",
+      "symbol": "🔗",
+      "category": "filesystem",
+      "meaning": "Hard link/symlink/junction must be distinct.",
+      "platform": "portable"
+    },
+    {
+      "id": "filesystem.find",
+      "symbol": "🔎",
+      "category": "filesystem",
+      "meaning": "Find paths.",
+      "platform": "portable"
+    },
+    {
+      "id": "filesystem.stat",
+      "symbol": "📊",
+      "category": "filesystem",
+      "meaning": "File metadata.",
+      "platform": "portable"
+    },
+    {
+      "id": "filesystem.file",
+      "symbol": "📄",
+      "category": "filesystem",
+      "meaning": "File object/type.",
+      "platform": "portable"
+    },
+    {
+      "id": "filesystem.tree",
+      "symbol": "🌲",
+      "category": "filesystem",
+      "meaning": "Directory tree.",
+      "platform": "portable"
+    },
+    {
+      "id": "filesystem.realpath",
+      "symbol": "🧭",
+      "category": "filesystem",
+      "meaning": "Canonical path resolution.",
+      "platform": "portable"
+    },
+    {
+      "id": "text.basename",
+      "symbol": "🏷",
+      "category": "text",
+      "meaning": "Final path component.",
+      "platform": "portable"
+    },
+    {
+      "id": "text.dirname",
+      "symbol": "📁↩",
+      "category": "text",
+      "meaning": "Parent directory component.",
+      "platform": "portable"
+    },
+    {
+      "id": "text.echo",
+      "symbol": "📢",
+      "category": "text",
+      "meaning": "Write text to output.",
+      "platform": "portable"
+    },
+    {
+      "id": "text.head",
+      "symbol": "⬆",
+      "category": "text",
+      "meaning": "First records.",
+      "platform": "portable"
+    },
+    {
+      "id": "text.tail",
+      "symbol": "⬇",
+      "category": "text",
+      "meaning": "Final records.",
+      "platform": "portable"
+    },
+    {
+      "id": "text.wc",
+      "symbol": "🔢wc",
+      "category": "text",
+      "meaning": "Count lines/words/bytes/chars.",
+      "platform": "portable"
+    },
+    {
+      "id": "text.grep",
+      "symbol": "🔍",
+      "category": "text",
+      "meaning": "Pattern search; define pattern dialect.",
+      "platform": "portable"
+    },
+    {
+      "id": "text.sed",
+      "symbol": "✏",
+      "category": "text",
+      "meaning": "Stream editing.",
+      "platform": "portable"
+    },
+    {
+      "id": "text.awk",
+      "symbol": "🧙",
+      "category": "text",
+      "meaning": "Structured text processing.",
+      "platform": "portable"
+    },
+    {
+      "id": "text.sort",
+      "symbol": "🔤",
+      "category": "text",
+      "meaning": "Sort; symbol collides with string type.",
+      "platform": "portable"
+    },
+    {
+      "id": "text.uniq",
+      "symbol": "1️⃣",
+      "category": "text",
+      "meaning": "Deduplicate adjacent records unless specified otherwise.",
+      "platform": "portable"
+    },
+    {
+      "id": "text.cut",
+      "symbol": "✂",
+      "category": "text",
+      "meaning": "Select fields/columns.",
+      "platform": "portable"
+    },
+    {
+      "id": "text.tr",
+      "symbol": "🔄",
+      "category": "text",
+      "meaning": "Translate characters; symbol collision with context switch.",
+      "platform": "portable"
+    },
+    {
+      "id": "text.tee",
+      "symbol": "📤📝",
+      "category": "text",
+      "meaning": "Output and file; requires write permission.",
+      "platform": "portable"
+    },
+    {
+      "id": "text.diff",
+      "symbol": "🔀",
+      "category": "text",
+      "meaning": "Compare text; symbol collides with logical OR.",
+      "platform": "portable"
+    },
+    {
+      "id": "text.comm",
+      "symbol": "🆚",
+      "category": "text",
+      "meaning": "Compare sorted inputs.",
+      "platform": "portable"
+    },
+    {
+      "id": "text.paste",
+      "symbol": "🧴",
+      "category": "text",
+      "meaning": "Merge records.",
+      "platform": "portable"
+    },
+    {
+      "id": "text.split",
+      "symbol": "✂📄",
+      "category": "text",
+      "meaning": "Split file/stream.",
+      "platform": "portable"
+    },
+    {
+      "id": "text.join",
+      "symbol": "🤝📄",
+      "category": "text",
+      "meaning": "Join records by keys.",
+      "platform": "portable"
+    },
+    {
+      "id": "text.printf",
+      "symbol": "🖨",
+      "category": "text",
+      "meaning": "Formatted output.",
+      "platform": "portable"
+    },
+    {
+      "id": "text.less",
+      "symbol": "📄⬇",
+      "category": "text",
+      "meaning": "Paged output.",
+      "platform": "portable"
+    },
+    {
+      "id": "text.more",
+      "symbol": "📄➡",
+      "category": "text",
+      "meaning": "Paged output.",
+      "platform": "portable"
+    },
+    {
+      "id": "process.list",
+      "symbol": "👥",
+      "category": "process",
+      "meaning": "List processes; symbol also used for HKU/group.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "process.monitor",
+      "symbol": "📊",
+      "category": "process",
+      "meaning": "Monitor resource usage.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "process.signal",
+      "symbol": "💀",
+      "category": "process",
+      "meaning": "Send authorized signal.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "process.jobs",
+      "symbol": "📋💼",
+      "category": "process",
+      "meaning": "List shell jobs.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "process.background",
+      "symbol": "🔙",
+      "category": "process",
+      "meaning": "Background shell job.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "process.foreground",
+      "symbol": "🔜",
+      "category": "process",
+      "meaning": "Foreground shell job.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "process.nohup",
+      "symbol": "📵",
+      "category": "process",
+      "meaning": "Detach from hangup where supported.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "process.priority",
+      "symbol": "😊",
+      "category": "process",
+      "meaning": "Process priority; provisional alias.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "process.wait",
+      "symbol": "⏳",
+      "category": "process",
+      "meaning": "Wait for completion.",
+      "platform": "portable"
+    },
+    {
+      "id": "process.sleep",
+      "symbol": "😴",
+      "category": "process",
+      "meaning": "Delay execution.",
+      "platform": "portable"
+    },
+    {
+      "id": "process.time",
+      "symbol": "⏱",
+      "category": "process",
+      "meaning": "Measure time.",
+      "platform": "portable"
+    },
+    {
+      "id": "process.syscall_trace",
+      "symbol": "🩹",
+      "category": "process",
+      "meaning": "System-call tracing; alias collides with error handler.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "process.start",
+      "symbol": "🎬",
+      "category": "process",
+      "meaning": "Start process/session; define target.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "process.timeout",
+      "symbol": "⌛",
+      "category": "process",
+      "meaning": "Enforce timeout.",
+      "platform": "portable"
+    },
+    {
+      "id": "process.fork",
+      "symbol": "🧵",
+      "category": "process",
+      "meaning": "Unix process creation; not a VM task.",
+      "platform": "unix"
+    },
+    {
+      "id": "network.ping",
+      "symbol": "📡",
+      "category": "network",
+      "meaning": "Reachability diagnostic.",
+      "platform": "portable"
+    },
+    {
+      "id": "network.traceroute",
+      "symbol": "🛤",
+      "category": "network",
+      "meaning": "Trace network route.",
+      "platform": "portable"
+    },
+    {
+      "id": "network.dns_lookup",
+      "symbol": "🔍📡",
+      "category": "network",
+      "meaning": "DNS lookup.",
+      "platform": "portable"
+    },
+    {
+      "id": "network.netstat",
+      "symbol": "🕸",
+      "category": "network",
+      "meaning": "Network statistics/connections.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "network.ip",
+      "symbol": "🌐📍",
+      "category": "network",
+      "meaning": "Inspect/configure IP; separate read and write.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "network.ifconfig",
+      "symbol": "🌐⚙",
+      "category": "network",
+      "meaning": "Legacy interface configuration.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "network.route",
+      "symbol": "🛣",
+      "category": "network",
+      "meaning": "Routing table inspect/modify.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "network.nc",
+      "symbol": "🔌",
+      "category": "network",
+      "meaning": "Network connection utility.",
+      "platform": "portable"
+    },
+    {
+      "id": "network.wget",
+      "symbol": "📥",
+      "category": "network",
+      "meaning": "Fetch remote resources.",
+      "platform": "portable"
+    },
+    {
+      "id": "network.curl",
+      "symbol": "🌐",
+      "category": "network",
+      "meaning": "Transfer data.",
+      "platform": "portable"
+    },
+    {
+      "id": "network.ssh",
+      "symbol": "🔑🌐",
+      "category": "network",
+      "meaning": "SSH connection; host/credential policy required.",
+      "platform": "portable"
+    },
+    {
+      "id": "network.scp",
+      "symbol": "📤🌐",
+      "category": "network",
+      "meaning": "Secure transfer.",
+      "platform": "portable"
+    },
+    {
+      "id": "network.smb",
+      "symbol": "📁🌐",
+      "category": "network",
+      "meaning": "SMB file access.",
+      "platform": "windows"
+    },
+    {
+      "id": "network.hostname",
+      "symbol": "🏠",
+      "category": "network",
+      "meaning": "Host name.",
+      "platform": "portable"
+    },
+    {
+      "id": "network.host_lookup",
+      "symbol": "🏠📡",
+      "category": "network",
+      "meaning": "Host lookup.",
+      "platform": "portable"
+    },
+    {
+      "id": "storage.df",
+      "symbol": "💾df",
+      "category": "storage",
+      "meaning": "Filesystem usage.",
+      "platform": "portable"
+    },
+    {
+      "id": "storage.du",
+      "symbol": "📦du",
+      "category": "storage",
+      "meaning": "Directory usage.",
+      "platform": "portable"
+    },
+    {
+      "id": "storage.mount",
+      "symbol": "🗻",
+      "category": "storage",
+      "meaning": "Mount; separate inspection and mutation.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "storage.umount",
+      "symbol": "⬇🗻",
+      "category": "storage",
+      "meaning": "Unmount.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "storage.block_devices",
+      "symbol": "📚💾",
+      "category": "storage",
+      "meaning": "List block devices.",
+      "platform": "linux"
+    },
+    {
+      "id": "storage.partition_tool",
+      "symbol": "🗄",
+      "category": "storage",
+      "meaning": "Partition management; destructive.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "storage.mkfs",
+      "symbol": "🔨💾",
+      "category": "storage",
+      "meaning": "Create filesystem; destructive.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "storage.fsck",
+      "symbol": "🩺💾",
+      "category": "storage",
+      "meaning": "Check/repair filesystem.",
+      "platform": "unix"
+    },
+    {
+      "id": "storage.chkdsk",
+      "symbol": "🗄",
+      "category": "storage",
+      "meaning": "Windows filesystem check/repair.",
+      "platform": "windows"
+    },
+    {
+      "id": "storage.defrag",
+      "symbol": "🔧💾",
+      "category": "storage",
+      "meaning": "Volume optimization.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "windows.boot_config",
+      "symbol": "📋b",
+      "category": "storage",
+      "meaning": "Windows boot config; high impact.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.image_service",
+      "symbol": "💿",
+      "category": "storage",
+      "meaning": "Windows image servicing.",
+      "platform": "windows"
+    },
+    {
+      "id": "system.poweroff",
+      "symbol": "🔌off",
+      "category": "system",
+      "meaning": "Power off.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "system.reboot",
+      "symbol": "🔄rb",
+      "category": "system",
+      "meaning": "Reboot.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "system.halt",
+      "symbol": "🛑",
+      "category": "system",
+      "meaning": "OS halt; distinct from VM HALT.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "session.exit",
+      "symbol": "🚪x",
+      "category": "system",
+      "meaning": "Exit current session.",
+      "platform": "portable"
+    },
+    {
+      "id": "session.logout",
+      "symbol": "🚪👋",
+      "category": "system",
+      "meaning": "Log out.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "session.lock",
+      "symbol": "🔒",
+      "category": "system",
+      "meaning": "Lock session.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "system.shutdown",
+      "symbol": "🛑sd",
+      "category": "system",
+      "meaning": "Orderly shutdown.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "system.hibernate",
+      "symbol": "😴",
+      "category": "system",
+      "meaning": "Hibernate where supported.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "package.apt",
+      "symbol": "📦apt",
+      "category": "package",
+      "meaning": "APT manager.",
+      "platform": "debian"
+    },
+    {
+      "id": "package.yum",
+      "symbol": "📦🟡",
+      "category": "package",
+      "meaning": "YUM manager.",
+      "platform": "rpm-linux"
+    },
+    {
+      "id": "package.pacman",
+      "symbol": "📦🔵",
+      "category": "package",
+      "meaning": "Pacman manager.",
+      "platform": "arch-linux"
+    },
+    {
+      "id": "package.brew",
+      "symbol": "🍺",
+      "category": "package",
+      "meaning": "Homebrew.",
+      "platform": "macos-linux"
+    },
+    {
+      "id": "package.pip",
+      "symbol": "🐍📦",
+      "category": "package",
+      "meaning": "Python package manager.",
+      "platform": "portable"
+    },
+    {
+      "id": "package.npm",
+      "symbol": "📦🟢",
+      "category": "package",
+      "meaning": "Node package manager.",
+      "platform": "portable"
+    },
+    {
+      "id": "package.cargo",
+      "symbol": "📦🦀",
+      "category": "package",
+      "meaning": "Rust package/build manager.",
+      "platform": "portable"
+    },
+    {
+      "id": "package.gem",
+      "symbol": "💎📦",
+      "category": "package",
+      "meaning": "RubyGems.",
+      "platform": "portable"
+    },
+    {
+      "id": "package.winget",
+      "symbol": "📦🪟",
+      "category": "package",
+      "meaning": "Windows Package Manager.",
+      "platform": "windows"
+    },
+    {
+      "id": "package.choco",
+      "symbol": "📦⬛",
+      "category": "package",
+      "meaning": "Chocolatey.",
+      "platform": "windows"
+    },
+    {
+      "id": "package.scoop",
+      "symbol": "📦🟦",
+      "category": "package",
+      "meaning": "Scoop.",
+      "platform": "windows"
+    },
+    {
+      "id": "package.nuget",
+      "symbol": "📦📦",
+      "category": "package",
+      "meaning": "NuGet.",
+      "platform": "dotnet"
+    },
+    {
+      "id": "runtime.python",
+      "symbol": "🐍",
+      "category": "runtime",
+      "meaning": "Python runtime.",
+      "platform": "portable"
+    },
+    {
+      "id": "runtime.node",
+      "symbol": "🟢",
+      "category": "runtime",
+      "meaning": "Node.js runtime.",
+      "platform": "portable"
+    },
+    {
+      "id": "runtime.ruby",
+      "symbol": "💎",
+      "category": "runtime",
+      "meaning": "Ruby runtime.",
+      "platform": "portable"
+    },
+    {
+      "id": "runtime.perl",
+      "symbol": "🐪",
+      "category": "runtime",
+      "meaning": "Perl runtime.",
+      "platform": "portable"
+    },
+    {
+      "id": "runtime.go",
+      "symbol": "🐹",
+      "category": "runtime",
+      "meaning": "Go toolchain.",
+      "platform": "portable"
+    },
+    {
+      "id": "runtime.rust",
+      "symbol": "🦀",
+      "category": "runtime",
+      "meaning": "Rust toolchain; rustc differs from Cargo.",
+      "platform": "portable"
+    },
+    {
+      "id": "build.gcc",
+      "symbol": "🛠",
+      "category": "build",
+      "meaning": "GCC compiler.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "build.make",
+      "symbol": "🔨",
+      "category": "build",
+      "meaning": "Make.",
+      "platform": "portable"
+    },
+    {
+      "id": "build.cmake",
+      "symbol": "🔨🗺",
+      "category": "build",
+      "meaning": "CMake.",
+      "platform": "portable"
+    },
+    {
+      "id": "container.docker",
+      "symbol": "🐳",
+      "category": "container",
+      "meaning": "Docker; mounts/privilege/network need policy.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "orchestration.kubectl",
+      "symbol": "☸",
+      "category": "infrastructure",
+      "meaning": "Kubernetes; explicit context/namespace.",
+      "platform": "cloud"
+    },
+    {
+      "id": "cloud.azure",
+      "symbol": "☁ az",
+      "category": "infrastructure",
+      "meaning": "Azure CLI; explicit tenant/subscription/resource scope.",
+      "platform": "cloud"
+    },
+    {
+      "id": "build.maven",
+      "symbol": "📦 mvn",
+      "category": "build",
+      "meaning": "Maven.",
+      "platform": "portable"
+    },
+    {
+      "id": "build.gradle",
+      "symbol": "🐘",
+      "category": "build",
+      "meaning": "Gradle.",
+      "platform": "portable"
+    },
+    {
+      "id": "windows.registry",
+      "symbol": "📚⚙",
+      "category": "windows-registry",
+      "meaning": "Windows Registry subsystem.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.registry.hklm",
+      "symbol": "🏢",
+      "category": "windows-registry",
+      "meaning": "HKEY_LOCAL_MACHINE.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.registry.system",
+      "symbol": "🧩",
+      "category": "windows-registry",
+      "meaning": "HKLM SYSTEM subkey.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.registry.software",
+      "symbol": "📦",
+      "category": "windows-registry",
+      "meaning": "SOFTWARE subkey.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.registry.security",
+      "symbol": "🛡",
+      "category": "windows-registry",
+      "meaning": "HKLM SECURITY; sensitive.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.registry.sam",
+      "symbol": "👤",
+      "category": "windows-registry",
+      "meaning": "HKLM SAM; sensitive.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.registry.hardware",
+      "symbol": "🔩",
+      "category": "windows-registry",
+      "meaning": "HKLM HARDWARE view.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.registry.hkcu",
+      "symbol": "👤",
+      "category": "windows-registry",
+      "meaning": "HKEY_CURRENT_USER.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.registry.user_software",
+      "symbol": "📦",
+      "category": "windows-registry",
+      "meaning": "HKCU Software.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.registry.environment",
+      "symbol": "🌿",
+      "category": "windows-registry",
+      "meaning": "User environment settings.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.registry.run",
+      "symbol": "🚀",
+      "category": "windows-registry",
+      "meaning": "Startup Run entries; sensitive.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.registry.explorer",
+      "symbol": "🖥",
+      "category": "windows-registry",
+      "meaning": "Explorer settings.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.registry.hkcr",
+      "symbol": "🗂",
+      "category": "windows-registry",
+      "meaning": "Merged class-registration view.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.registry.exe_assoc",
+      "symbol": "⌨",
+      "category": "windows-registry",
+      "meaning": ".exe association registration.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.registry.txt_assoc",
+      "symbol": "📄",
+      "category": "windows-registry",
+      "meaning": ".txt association registration.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.registry.ps1_assoc",
+      "symbol": "⚡",
+      "category": "windows-registry",
+      "meaning": ".ps1 association registration.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.registry.assoc",
+      "symbol": "🔗",
+      "category": "windows-registry",
+      "meaning": "File associations/handlers.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.registry.hku",
+      "symbol": "👥",
+      "category": "windows-registry",
+      "meaning": "HKEY_USERS.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.registry.user_profile",
+      "symbol": "👤",
+      "category": "windows-registry",
+      "meaning": "Per-user registry configuration.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.registry.hkcc",
+      "symbol": "⚙",
+      "category": "windows-registry",
+      "meaning": "HKEY_CURRENT_CONFIG view.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.registry.hardware_profile",
+      "symbol": "🔩",
+      "category": "windows-registry",
+      "meaning": "Hardware profile.",
+      "platform": "windows"
+    },
+    {
+      "id": "graphics.compositor",
+      "symbol": "🎨",
+      "category": "graphics",
+      "meaning": "DWM/compositor.",
+      "platform": "windows"
+    },
+    {
+      "id": "graphics.directx",
+      "symbol": "🎮",
+      "category": "graphics",
+      "meaning": "DirectX ecosystem.",
+      "platform": "windows"
+    },
+    {
+      "id": "graphics.direct3d",
+      "symbol": "🎮3️⃣",
+      "category": "graphics",
+      "meaning": "Direct3D.",
+      "platform": "windows"
+    },
+    {
+      "id": "graphics.direct2d",
+      "symbol": "🎮2️⃣",
+      "category": "graphics",
+      "meaning": "Direct2D.",
+      "platform": "windows"
+    },
+    {
+      "id": "graphics.directwrite",
+      "symbol": "✍",
+      "category": "graphics",
+      "meaning": "DirectWrite text layout/rendering.",
+      "platform": "windows"
+    },
+    {
+      "id": "graphics.wddm",
+      "symbol": "🔧🎨",
+      "category": "graphics",
+      "meaning": "Windows Display Driver Model.",
+      "platform": "windows"
+    },
+    {
+      "id": "graphics.dxgi",
+      "symbol": "🔗🎮",
+      "category": "graphics",
+      "meaning": "DirectX Graphics Infrastructure.",
+      "platform": "windows"
+    },
+    {
+      "id": "graphics.vulkan",
+      "symbol": "🎮🔥",
+      "category": "graphics",
+      "meaning": "Vulkan API.",
+      "platform": "cross-platform"
+    },
+    {
+      "id": "graphics.opengl",
+      "symbol": "🎮🟢",
+      "category": "graphics",
+      "meaning": "OpenGL API.",
+      "platform": "cross-platform"
+    },
+    {
+      "id": "ui.wpf",
+      "symbol": "🖼⚡",
+      "category": "ui",
+      "meaning": "WPF UI framework.",
+      "platform": "windows"
+    },
+    {
+      "id": "ui.winui",
+      "symbol": "🖼🆕",
+      "category": "ui",
+      "meaning": "WinUI framework.",
+      "platform": "windows"
+    },
+    {
+      "id": "graphics.composition",
+      "symbol": "🧩🎨",
+      "category": "graphics",
+      "meaning": "Windows Composition APIs.",
+      "platform": "windows"
+    },
+    {
+      "id": "audio.core",
+      "symbol": "🎵",
+      "category": "audio",
+      "meaning": "Audio subsystem.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "audio.wasapi",
+      "symbol": "🎵⚡",
+      "category": "audio",
+      "meaning": "WASAPI.",
+      "platform": "windows"
+    },
+    {
+      "id": "audio.directsound",
+      "symbol": "🎵🎮",
+      "category": "audio",
+      "meaning": "DirectSound.",
+      "platform": "windows"
+    },
+    {
+      "id": "media.foundation",
+      "symbol": "🎬",
+      "category": "media",
+      "meaning": "Media Foundation.",
+      "platform": "windows"
+    },
+    {
+      "id": "media.codec",
+      "symbol": "📼",
+      "category": "media",
+      "meaning": "Codec concept.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "media.dxva",
+      "symbol": "📼🎮",
+      "category": "media",
+      "meaning": "DirectX Video Acceleration.",
+      "platform": "windows"
+    },
+    {
+      "id": "media.wmp",
+      "symbol": "🎵▶",
+      "category": "media",
+      "meaning": "Windows Media Player integration.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.kernel",
+      "symbol": "🧩 ntoskrnl",
+      "category": "windows",
+      "meaning": "NT kernel.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.hal",
+      "symbol": "🔩 HAL",
+      "category": "windows",
+      "meaning": "Hardware Abstraction Layer.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.smss",
+      "symbol": "🎯🚪",
+      "category": "windows",
+      "meaning": "Session Manager; contextual alias.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.services",
+      "symbol": "⚙ services",
+      "category": "windows",
+      "meaning": "Service Control Manager process/services.exe.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.lsass",
+      "symbol": "🔐",
+      "category": "windows",
+      "meaning": "Local Security Authority process; sensitive.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.winlogon",
+      "symbol": "🚪",
+      "category": "windows",
+      "meaning": "Windows logon process.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.userinit",
+      "symbol": "👤🚀",
+      "category": "windows",
+      "meaning": "User initialization process.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.dwm",
+      "symbol": "🎨",
+      "category": "windows",
+      "meaning": "Desktop Window Manager.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.explorer",
+      "symbol": "🖥📁",
+      "category": "windows",
+      "meaning": "Windows shell/file manager.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.cmd",
+      "symbol": "📟",
+      "category": "windows",
+      "meaning": "Command Prompt.",
+      "platform": "windows"
+    },
+    {
+      "id": "windows.powershell",
+      "symbol": "📟⚡",
+      "category": "windows",
+      "meaning": "PowerShell.",
+      "platform": "windows"
+    },
+    {
+      "id": "android.platform",
+      "symbol": "🤖",
+      "category": "android",
+      "meaning": "Android platform.",
+      "platform": "android"
+    },
+    {
+      "id": "android.f_droid",
+      "symbol": "🏪",
+      "category": "android",
+      "meaning": "F-Droid ecosystem.",
+      "platform": "android"
+    },
+    {
+      "id": "android.art",
+      "symbol": "🧠",
+      "category": "android",
+      "meaning": "Android Runtime.",
+      "platform": "android"
+    },
+    {
+      "id": "android.zygote",
+      "symbol": "🎯",
+      "category": "android",
+      "meaning": "Zygote process.",
+      "platform": "android"
+    },
+    {
+      "id": "android.system_server",
+      "symbol": "🏛",
+      "category": "android",
+      "meaning": "Android system_server.",
+      "platform": "android"
+    },
+    {
+      "id": "android.bionic",
+      "symbol": "📚",
+      "category": "android",
+      "meaning": "Bionic C library.",
+      "platform": "android"
+    },
+    {
+      "id": "android.apk",
+      "symbol": "📦",
+      "category": "android",
+      "meaning": "Android application package.",
+      "platform": "android"
+    },
+    {
+      "id": "android.manifest",
+      "symbol": "📄",
+      "category": "android",
+      "meaning": "AndroidManifest.",
+      "platform": "android"
+    },
+    {
+      "id": "android.dex",
+      "symbol": "🧠🅳",
+      "category": "android",
+      "meaning": "DEX bytecode.",
+      "platform": "android"
+    },
+    {
+      "id": "android.oat",
+      "symbol": "🧠🅾",
+      "category": "android",
+      "meaning": "ART compiled artifact; not mandatory APK component.",
+      "platform": "android"
+    },
+    {
+      "id": "android.resources",
+      "symbol": "🎨",
+      "category": "android",
+      "meaning": "Compiled resources table.",
+      "platform": "android"
+    },
+    {
+      "id": "android.signature",
+      "symbol": "🔐",
+      "category": "android",
+      "meaning": "APK signing metadata; signature presence alone is not trust.",
+      "platform": "android"
+    },
+    {
+      "id": "sandbox.binary_allowlist",
+      "symbol": "🔤bin🔤",
+      "category": "security",
+      "meaning": "Executable allowlist.",
+      "platform": "portable"
+    },
+    {
+      "id": "sandbox.path_allowlist",
+      "symbol": "📍path",
+      "category": "security",
+      "meaning": "Allowed paths/roots.",
+      "platform": "portable"
+    },
+    {
+      "id": "sandbox.cpu_limit",
+      "symbol": "🎫cpu",
+      "category": "security",
+      "meaning": "CPU limit.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "sandbox.memory_limit",
+      "symbol": "💾as",
+      "category": "security",
+      "meaning": "Memory/address-space limit.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "sandbox.process_limit",
+      "symbol": "🧵nproc",
+      "category": "security",
+      "meaning": "Process count limit.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "sandbox.file_size_limit",
+      "symbol": "📄fsize",
+      "category": "security",
+      "meaning": "File size limit.",
+      "platform": "platform-dependent"
+    },
+    {
+      "id": "sandbox.wall_timeout",
+      "symbol": "⏰wall",
+      "category": "security",
+      "meaning": "Wall-clock timeout.",
+      "platform": "portable"
+    },
+    {
+      "id": "sandbox.no_shell",
+      "symbol": "🚫shell",
+      "category": "security",
+      "meaning": "Disable shell-mediated execution.",
+      "platform": "portable"
+    },
+    {
+      "id": "sandbox.clean_environment",
+      "symbol": "🧼env",
+      "category": "security",
+      "meaning": "Controlled environment.",
+      "platform": "portable"
+    }
+  ]
+}
