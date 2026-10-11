@@ -1,0 +1,1315 @@
+{
+  "schema_version": "1.0.0",
+  "project": "SHUSHOS",
+  "status_values": [
+    "planned",
+    "implemented",
+    "tested",
+    "deprecated",
+    "unavailable"
+  ],
+  "resolution_policy": {
+    "mode": "exact",
+    "allow_implicit_fallback": false,
+    "unknown_reference": "E_CAPABILITY_NOT_FOUND",
+    "incompatible_reference": "E_CAPABILITY_INCOMPATIBLE",
+    "ambiguous_alias": "E_ALIAS_AMBIGUOUS",
+    "verified_only_execution": true
+  },
+  "capability_contract_fields": [
+    "id",
+    "version",
+    "inputs",
+    "outputs",
+    "implementation",
+    "permissions",
+    "platforms",
+    "status"
+  ],
+  "capabilities": [
+    {
+      "id": "registry.resolve",
+      "version": "1.0.0",
+      "summary": "Resolve canonical capability ID and exact version.",
+      "inputs": {
+        "reference": "STR",
+        "version": "STR"
+      },
+      "outputs": {
+        "capability": "CAPABILITY_REF"
+      },
+      "implementation": "registry.resolver.resolve",
+      "permissions": [
+        "registry.read"
+      ],
+      "platforms": [
+        "portable"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "registry.validate",
+      "version": "1.0.0",
+      "summary": "Validate manifest schema and cross-references.",
+      "inputs": {
+        "manifest": "JSON"
+      },
+      "outputs": {
+        "valid": "BOOL",
+        "diagnostics": "LIST"
+      },
+      "implementation": "registry.validator.validate",
+      "permissions": [
+        "registry.read"
+      ],
+      "platforms": [
+        "portable"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "registry.alias.resolve",
+      "version": "1.0.0",
+      "summary": "Resolve alias in explicit namespace.",
+      "inputs": {
+        "symbol": "STR",
+        "namespace": "STR"
+      },
+      "outputs": {
+        "canonical_id": "STR"
+      },
+      "implementation": "registry.alias.resolve",
+      "permissions": [
+        "registry.read"
+      ],
+      "platforms": [
+        "portable"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "runtime.execute",
+      "version": "1.0.0",
+      "summary": "Execute a resolved capability under policy.",
+      "inputs": {
+        "capability": "CAPABILITY_REF",
+        "arguments": "JSON"
+      },
+      "outputs": {
+        "status": "STATUS",
+        "result": "ANY"
+      },
+      "implementation": "runtime.dispatch",
+      "permissions": [
+        "capability.execute"
+      ],
+      "platforms": [
+        "portable"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "filesystem.read",
+      "version": "1.0.0",
+      "summary": "Read within allowed roots.",
+      "inputs": {
+        "path": "STR"
+      },
+      "outputs": {
+        "content": "STR",
+        "status": "STATUS"
+      },
+      "implementation": "filesystem.read",
+      "permissions": [
+        "fs.read"
+      ],
+      "platforms": [
+        "portable"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "filesystem.write",
+      "version": "1.0.0",
+      "summary": "Write within allowed roots.",
+      "inputs": {
+        "path": "STR",
+        "content": "STR"
+      },
+      "outputs": {
+        "status": "STATUS",
+        "bytes_written": "NUM"
+      },
+      "implementation": "filesystem.write",
+      "permissions": [
+        "fs.write"
+      ],
+      "platforms": [
+        "portable"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "filesystem.remove",
+      "version": "1.0.0",
+      "summary": "Remove a permitted file; recursive behavior explicit.",
+      "inputs": {
+        "path": "STR",
+        "recursive": "BOOL"
+      },
+      "outputs": {
+        "status": "STATUS"
+      },
+      "implementation": "filesystem.remove",
+      "permissions": [
+        "fs.delete"
+      ],
+      "platforms": [
+        "portable"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "process.spawn",
+      "version": "1.0.0",
+      "summary": "Launch allowlisted executable with controlled arguments and environment.",
+      "inputs": {
+        "executable": "STR",
+        "argv": "LIST",
+        "cwd": "STR",
+        "timeout_ms": "NUM"
+      },
+      "outputs": {
+        "exit_code": "NUM",
+        "status": "STATUS"
+      },
+      "implementation": "process.spawn",
+      "permissions": [
+        "process.spawn"
+      ],
+      "platforms": [
+        "platform-dependent"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "process.signal",
+      "version": "1.0.0",
+      "summary": "Send allowed signal to permitted process.",
+      "inputs": {
+        "pid": "NUM",
+        "signal": "STR"
+      },
+      "outputs": {
+        "status": "STATUS"
+      },
+      "implementation": "process.signal",
+      "permissions": [
+        "process.signal"
+      ],
+      "platforms": [
+        "platform-dependent"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "process.trace",
+      "version": "1.0.0",
+      "summary": "Collect authorized process/system trace events.",
+      "inputs": {
+        "target": "STR",
+        "duration_ms": "NUM"
+      },
+      "outputs": {
+        "events": "LIST",
+        "status": "STATUS"
+      },
+      "implementation": "process.trace",
+      "permissions": [
+        "process.trace"
+      ],
+      "platforms": [
+        "platform-dependent"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "net.dns.lookup",
+      "version": "1.0.0",
+      "summary": "Resolve a DNS name.",
+      "inputs": {
+        "name": "STR",
+        "record_type": "STR"
+      },
+      "outputs": {
+        "records": "LIST",
+        "status": "STATUS"
+      },
+      "implementation": "net.dns.lookup",
+      "permissions": [
+        "net.dns"
+      ],
+      "platforms": [
+        "portable"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "net.http.get",
+      "version": "1.0.0",
+      "summary": "Fetch HTTP(S) under host, time, and size policy.",
+      "inputs": {
+        "url": "STR",
+        "timeout_ms": "NUM"
+      },
+      "outputs": {
+        "status_code": "NUM",
+        "body": "BYTES"
+      },
+      "implementation": "net.http.get",
+      "permissions": [
+        "net.connect"
+      ],
+      "platforms": [
+        "portable"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "net.ssh.connect",
+      "version": "1.0.0",
+      "summary": "Connect to explicitly allowed SSH host.",
+      "inputs": {
+        "host": "STR",
+        "user": "STR",
+        "port": "NUM"
+      },
+      "outputs": {
+        "session": "HANDLE",
+        "status": "STATUS"
+      },
+      "implementation": "net.ssh.connect",
+      "permissions": [
+        "net.connect",
+        "credentials.use"
+      ],
+      "platforms": [
+        "portable"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "storage.usage.inspect",
+      "version": "1.0.0",
+      "summary": "Inspect filesystem capacity.",
+      "inputs": {
+        "path": "STR"
+      },
+      "outputs": {
+        "total_bytes": "NUM",
+        "free_bytes": "NUM",
+        "status": "STATUS"
+      },
+      "implementation": "storage.usage.inspect",
+      "permissions": [
+        "storage.read"
+      ],
+      "platforms": [
+        "platform-dependent"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "storage.partition.modify",
+      "version": "1.0.0",
+      "summary": "Modify an explicitly identified partition; destructive.",
+      "inputs": {
+        "device": "STR",
+        "operation": "STR",
+        "confirmation": "STR"
+      },
+      "outputs": {
+        "status": "STATUS"
+      },
+      "implementation": "storage.partition.modify",
+      "permissions": [
+        "storage.admin"
+      ],
+      "platforms": [
+        "platform-dependent"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "storage.filesystem.create",
+      "version": "1.0.0",
+      "summary": "Create filesystem on explicit target; destructive.",
+      "inputs": {
+        "device": "STR",
+        "filesystem": "STR",
+        "confirmation": "STR"
+      },
+      "outputs": {
+        "status": "STATUS"
+      },
+      "implementation": "storage.filesystem.create",
+      "permissions": [
+        "storage.admin"
+      ],
+      "platforms": [
+        "platform-dependent"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "package.install",
+      "version": "1.0.0",
+      "summary": "Install selected package/version.",
+      "inputs": {
+        "manager": "STR",
+        "package": "STR",
+        "version": "STR"
+      },
+      "outputs": {
+        "status": "STATUS"
+      },
+      "implementation": "package.install",
+      "permissions": [
+        "package.install"
+      ],
+      "platforms": [
+        "platform-dependent"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "compiler.compile",
+      "version": "1.0.0",
+      "summary": "Compile source with allowlisted toolchain.",
+      "inputs": {
+        "source": "STR",
+        "compiler": "STR",
+        "flags": "LIST"
+      },
+      "outputs": {
+        "artifact": "STR",
+        "diagnostics": "LIST",
+        "status": "STATUS"
+      },
+      "implementation": "compiler.compile",
+      "permissions": [
+        "build.execute",
+        "fs.write"
+      ],
+      "platforms": [
+        "platform-dependent"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "build.run",
+      "version": "1.0.0",
+      "summary": "Run build in restricted workspace.",
+      "inputs": {
+        "directory": "STR",
+        "tool": "STR",
+        "timeout_ms": "NUM"
+      },
+      "outputs": {
+        "exit_code": "NUM",
+        "status": "STATUS"
+      },
+      "implementation": "build.run",
+      "permissions": [
+        "build.execute",
+        "fs.read",
+        "fs.write"
+      ],
+      "platforms": [
+        "platform-dependent"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "container.run",
+      "version": "1.0.0",
+      "summary": "Run container with explicit image, mounts, privilege, network, limits.",
+      "inputs": {
+        "image": "STR",
+        "mounts": "LIST",
+        "network": "STR",
+        "limits": "JSON"
+      },
+      "outputs": {
+        "container_id": "STR",
+        "status": "STATUS"
+      },
+      "implementation": "container.run",
+      "permissions": [
+        "container.execute"
+      ],
+      "platforms": [
+        "platform-dependent"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "kubernetes.inspect",
+      "version": "1.0.0",
+      "summary": "Inspect resources in explicit context and namespace.",
+      "inputs": {
+        "context": "STR",
+        "namespace": "STR",
+        "resource": "STR"
+      },
+      "outputs": {
+        "items": "LIST",
+        "status": "STATUS"
+      },
+      "implementation": "kubernetes.inspect",
+      "permissions": [
+        "kubernetes.read"
+      ],
+      "platforms": [
+        "cloud"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "kubernetes.apply",
+      "version": "1.0.0",
+      "summary": "Apply reviewed manifest to explicit context and namespace.",
+      "inputs": {
+        "context": "STR",
+        "namespace": "STR",
+        "manifest": "STR"
+      },
+      "outputs": {
+        "status": "STATUS"
+      },
+      "implementation": "kubernetes.apply",
+      "permissions": [
+        "kubernetes.write"
+      ],
+      "platforms": [
+        "cloud"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "windows.registry.key.enumerate",
+      "version": "1.0.0",
+      "summary": "Enumerate authorized Registry subkeys.",
+      "inputs": {
+        "hive": "STR",
+        "key_path": "STR"
+      },
+      "outputs": {
+        "keys": "LIST",
+        "status": "STATUS"
+      },
+      "implementation": "windows.registry.enumerate_keys",
+      "permissions": [
+        "registry.read"
+      ],
+      "platforms": [
+        "windows"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "windows.registry.value.read",
+      "version": "1.0.0",
+      "summary": "Read Registry value preserving native type.",
+      "inputs": {
+        "hive": "STR",
+        "key_path": "STR",
+        "value_name": "STR"
+      },
+      "outputs": {
+        "found": "BOOL",
+        "value_type": "STR",
+        "value": "ANY",
+        "status": "STATUS"
+      },
+      "implementation": "windows.registry.read_value",
+      "permissions": [
+        "registry.read"
+      ],
+      "platforms": [
+        "windows"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "windows.registry.value.write",
+      "version": "1.0.0",
+      "summary": "Write Registry value with explicit type and authorization.",
+      "inputs": {
+        "hive": "STR",
+        "key_path": "STR",
+        "value_name": "STR",
+        "value_type": "STR",
+        "value": "ANY"
+      },
+      "outputs": {
+        "status": "STATUS"
+      },
+      "implementation": "windows.registry.write_value",
+      "permissions": [
+        "registry.write"
+      ],
+      "platforms": [
+        "windows"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "windows.registry.value.delete",
+      "version": "1.0.0",
+      "summary": "Delete Registry value in authorized scope.",
+      "inputs": {
+        "hive": "STR",
+        "key_path": "STR",
+        "value_name": "STR"
+      },
+      "outputs": {
+        "status": "STATUS"
+      },
+      "implementation": "windows.registry.delete_value",
+      "permissions": [
+        "registry.write"
+      ],
+      "platforms": [
+        "windows"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "windows.registry.association.inspect",
+      "version": "1.0.0",
+      "summary": "Inspect file association registration.",
+      "inputs": {
+        "extension": "STR"
+      },
+      "outputs": {
+        "handlers": "LIST",
+        "status": "STATUS"
+      },
+      "implementation": "windows.registry.inspect_association",
+      "permissions": [
+        "registry.read"
+      ],
+      "platforms": [
+        "windows"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "windows.registry.startup.inspect",
+      "version": "1.0.0",
+      "summary": "Inspect startup Run entries for permitted user scope.",
+      "inputs": {
+        "scope": "STR"
+      },
+      "outputs": {
+        "entries": "LIST",
+        "status": "STATUS"
+      },
+      "implementation": "windows.registry.inspect_startup",
+      "permissions": [
+        "registry.read"
+      ],
+      "platforms": [
+        "windows"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "graphics.device.enumerate",
+      "version": "1.0.0",
+      "summary": "Enumerate available graphics devices.",
+      "inputs": {},
+      "outputs": {
+        "devices": "LIST",
+        "status": "STATUS"
+      },
+      "implementation": "graphics.device.enumerate",
+      "permissions": [
+        "graphics.read"
+      ],
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "graphics.surface.create",
+      "version": "1.0.0",
+      "summary": "Create rendering surface.",
+      "inputs": {
+        "device": "HANDLE",
+        "width": "NUM",
+        "height": "NUM"
+      },
+      "outputs": {
+        "surface": "HANDLE",
+        "status": "STATUS"
+      },
+      "implementation": "graphics.surface.create",
+      "permissions": [
+        "graphics.render"
+      ],
+      "platforms": [
+        "platform-dependent"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "graphics.render.frame",
+      "version": "1.0.0",
+      "summary": "Render frame using selected backend.",
+      "inputs": {
+        "device": "HANDLE",
+        "commands": "LIST",
+        "target": "HANDLE"
+      },
+      "outputs": {
+        "status": "STATUS",
+        "frame_id": "NUM"
+      },
+      "implementation": "graphics.backend.render_frame",
+      "permissions": [
+        "graphics.render"
+      ],
+      "platforms": [
+        "platform-dependent"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "graphics.present",
+      "version": "1.0.0",
+      "summary": "Present completed frame.",
+      "inputs": {
+        "surface": "HANDLE",
+        "frame_id": "NUM"
+      },
+      "outputs": {
+        "status": "STATUS"
+      },
+      "implementation": "graphics.backend.present",
+      "permissions": [
+        "graphics.render"
+      ],
+      "platforms": [
+        "platform-dependent"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "graphics.text.layout",
+      "version": "1.0.0",
+      "summary": "Layout text with selected backend.",
+      "inputs": {
+        "text": "STR",
+        "font": "STR",
+        "width": "NUM"
+      },
+      "outputs": {
+        "runs": "LIST",
+        "status": "STATUS"
+      },
+      "implementation": "graphics.text.layout",
+      "permissions": [
+        "graphics.text"
+      ],
+      "platforms": [
+        "platform-dependent"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "audio.device.enumerate",
+      "version": "1.0.0",
+      "summary": "Enumerate audio devices.",
+      "inputs": {},
+      "outputs": {
+        "devices": "LIST",
+        "status": "STATUS"
+      },
+      "implementation": "audio.device.enumerate",
+      "permissions": [
+        "audio.read"
+      ],
+      "platforms": [
+        "platform-dependent"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "audio.stream.play",
+      "version": "1.0.0",
+      "summary": "Play authorized audio stream.",
+      "inputs": {
+        "device": "HANDLE",
+        "stream": "HANDLE"
+      },
+      "outputs": {
+        "status": "STATUS"
+      },
+      "implementation": "audio.stream.play",
+      "permissions": [
+        "audio.output"
+      ],
+      "platforms": [
+        "platform-dependent"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "audio.stream.capture",
+      "version": "1.0.0",
+      "summary": "Capture audio with explicit permission.",
+      "inputs": {
+        "device": "HANDLE",
+        "duration_ms": "NUM"
+      },
+      "outputs": {
+        "stream": "HANDLE",
+        "status": "STATUS"
+      },
+      "implementation": "audio.stream.capture",
+      "permissions": [
+        "audio.capture"
+      ],
+      "platforms": [
+        "platform-dependent"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "media.decode",
+      "version": "1.0.0",
+      "summary": "Decode supported media with allowlisted backend.",
+      "inputs": {
+        "input": "HANDLE",
+        "format": "STR"
+      },
+      "outputs": {
+        "stream": "HANDLE",
+        "status": "STATUS"
+      },
+      "implementation": "media.decode",
+      "permissions": [
+        "media.decode"
+      ],
+      "platforms": [
+        "platform-dependent"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "media.encode",
+      "version": "1.0.0",
+      "summary": "Encode media with bounded resources.",
+      "inputs": {
+        "input": "HANDLE",
+        "codec": "STR",
+        "options": "JSON"
+      },
+      "outputs": {
+        "output": "HANDLE",
+        "status": "STATUS"
+      },
+      "implementation": "media.encode",
+      "permissions": [
+        "media.encode"
+      ],
+      "platforms": [
+        "platform-dependent"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "media.hardware_acceleration.inspect",
+      "version": "1.0.0",
+      "summary": "Inspect hardware acceleration support.",
+      "inputs": {
+        "device": "HANDLE"
+      },
+      "outputs": {
+        "features": "LIST",
+        "status": "STATUS"
+      },
+      "implementation": "media.hardware_acceleration.inspect",
+      "permissions": [
+        "media.read"
+      ],
+      "platforms": [
+        "platform-dependent"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "diagnostics.emit",
+      "version": "1.0.0",
+      "summary": "Emit structured diagnostic event.",
+      "inputs": {
+        "event": "STR",
+        "severity": "STR",
+        "code": "STR",
+        "message": "STR",
+        "span": "JSON"
+      },
+      "outputs": {
+        "status": "STATUS"
+      },
+      "implementation": "diagnostics.emit",
+      "permissions": [
+        "diagnostics.write"
+      ],
+      "platforms": [
+        "portable"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "diagnostics.trace.etw",
+      "version": "1.0.0",
+      "summary": "Collect authorized ETW events.",
+      "inputs": {
+        "provider": "STR",
+        "duration_ms": "NUM"
+      },
+      "outputs": {
+        "events": "LIST",
+        "status": "STATUS"
+      },
+      "implementation": "windows.etw.collect",
+      "permissions": [
+        "diagnostics.trace"
+      ],
+      "platforms": [
+        "windows"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "diagnostics.crash_dump.write",
+      "version": "1.0.0",
+      "summary": "Write crash dump under size/access/retention policy.",
+      "inputs": {
+        "process": "HANDLE",
+        "path": "STR",
+        "max_bytes": "NUM"
+      },
+      "outputs": {
+        "status": "STATUS",
+        "path": "STR"
+      },
+      "implementation": "diagnostics.dump.write",
+      "permissions": [
+        "diagnostics.dump"
+      ],
+      "platforms": [
+        "platform-dependent"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "sandbox.check",
+      "version": "1.0.0",
+      "summary": "Check request against sandbox policy.",
+      "inputs": {
+        "request": "JSON",
+        "policy": "JSON"
+      },
+      "outputs": {
+        "allowed": "BOOL",
+        "reasons": "LIST"
+      },
+      "implementation": "sandbox.check",
+      "permissions": [
+        "policy.read"
+      ],
+      "platforms": [
+        "portable"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    },
+    {
+      "id": "audit.append",
+      "version": "1.0.0",
+      "summary": "Append execution/policy decision to audit log.",
+      "inputs": {
+        "event": "JSON"
+      },
+      "outputs": {
+        "status": "STATUS"
+      },
+      "implementation": "audit.append",
+      "permissions": [
+        "audit.write"
+      ],
+      "platforms": [
+        "portable"
+      ],
+      "sandbox": {
+        "required": true,
+        "resource_limits_required": true
+      },
+      "status": "planned",
+      "tests": {
+        "status": "not_run",
+        "cases": []
+      }
+    }
+  ]
+}
