@@ -8,7 +8,7 @@ static const char *const add_permissions[] = { NULL };
 
 static const ShushCapability capabilities[] = {
     { "math.add", "1.0.0", add_inputs, 2, add_outputs, 1,
-      "vm_op_add", add_permissions, 0, SHUSH_TEST_VERIFIED }
+      "vm_op_add", add_permissions, 0, SHUSH_TEST_UNVERIFIED }
 };
 
 static int has_permission(const ShushResolvePolicy *policy, const char *required) {
