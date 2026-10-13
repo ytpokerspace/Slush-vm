@@ -1,0 +1,254 @@
+{
+  "schema_version": "1.0.0",
+  "title": "SHUSH 20-task semantic-reference starter benchmark",
+  "status": "task_definitions_only_not_measured",
+  "purpose": "Exercise the initial text.normalize and text.word_count capabilities. These tasks define prompts and expected answers; they contain no model token or latency measurements.",
+  "variants": [
+    "conventional",
+    "emoji_shorthand",
+    "semantic_refs"
+  ],
+  "measurement_policy": "For each task and variant, run the same model/settings and record provider-reported input/output tokens, first-attempt correctness, and elapsed milliseconds. Include translation/registry overhead used in production. Do not fill measurements by estimating.",
+  "tasks": [
+    {
+      "task_id": "T01",
+      "operation": "normalize",
+      "input": "  hello   world  ",
+      "expected": "hello world",
+      "prompts": {
+        "conventional": "Normalize whitespace in this string: \"  hello   world  \". Return only the resulting string.",
+        "emoji_shorthand": "🧹(\"  hello   world  \")",
+        "semantic_refs": "workflow.text.normalize@1.0.0(\"  hello   world  \")"
+      },
+      "measurements": null
+    },
+    {
+      "task_id": "T02",
+      "operation": "normalize",
+      "input": "\n  SHUSH\tworkflow   engine \n",
+      "expected": "SHUSH workflow engine",
+      "prompts": {
+        "conventional": "Normalize whitespace in this string: \"\\n  SHUSH\\tworkflow   engine \\n\". Return only the resulting string.",
+        "emoji_shorthand": "🧹(\"\\n  SHUSH\\tworkflow   engine \\n\")",
+        "semantic_refs": "workflow.text.normalize@1.0.0(\"\\n  SHUSH\\tworkflow   engine \\n\")"
+      },
+      "measurements": null
+    },
+    {
+      "task_id": "T03",
+      "operation": "normalize",
+      "input": "single",
+      "expected": "single",
+      "prompts": {
+        "conventional": "Normalize whitespace in this string: \"single\". Return only the resulting string.",
+        "emoji_shorthand": "🧹(\"single\")",
+        "semantic_refs": "workflow.text.normalize@1.0.0(\"single\")"
+      },
+      "measurements": null
+    },
+    {
+      "task_id": "T04",
+      "operation": "normalize",
+      "input": "     ",
+      "expected": "",
+      "prompts": {
+        "conventional": "Normalize whitespace in this string: \"     \". Return only the resulting string.",
+        "emoji_shorthand": "🧹(\"     \")",
+        "semantic_refs": "workflow.text.normalize@1.0.0(\"     \")"
+      },
+      "measurements": null
+    },
+    {
+      "task_id": "T05",
+      "operation": "normalize",
+      "input": "one two three",
+      "expected": "one two three",
+      "prompts": {
+        "conventional": "Normalize whitespace in this string: \"one two three\". Return only the resulting string.",
+        "emoji_shorthand": "🧹(\"one two three\")",
+        "semantic_refs": "workflow.text.normalize@1.0.0(\"one two three\")"
+      },
+      "measurements": null
+    },
+    {
+      "task_id": "T06",
+      "operation": "normalize",
+      "input": " emoji   🧹   pipeline ",
+      "expected": "emoji 🧹 pipeline",
+      "prompts": {
+        "conventional": "Normalize whitespace in this string: \" emoji   🧹   pipeline \". Return only the resulting string.",
+        "emoji_shorthand": "🧹(\" emoji   🧹   pipeline \")",
+        "semantic_refs": "workflow.text.normalize@1.0.0(\" emoji   🧹   pipeline \")"
+      },
+      "measurements": null
+    },
+    {
+      "task_id": "T07",
+      "operation": "normalize",
+      "input": "a\tb\nc\rd",
+      "expected": "a b c d",
+      "prompts": {
+        "conventional": "Normalize whitespace in this string: \"a\\tb\\nc\\rd\". Return only the resulting string.",
+        "emoji_shorthand": "🧹(\"a\\tb\\nc\\rd\")",
+        "semantic_refs": "workflow.text.normalize@1.0.0(\"a\\tb\\nc\\rd\")"
+      },
+      "measurements": null
+    },
+    {
+      "task_id": "T08",
+      "operation": "normalize",
+      "input": "  leading",
+      "expected": "leading",
+      "prompts": {
+        "conventional": "Normalize whitespace in this string: \"  leading\". Return only the resulting string.",
+        "emoji_shorthand": "🧹(\"  leading\")",
+        "semantic_refs": "workflow.text.normalize@1.0.0(\"  leading\")"
+      },
+      "measurements": null
+    },
+    {
+      "task_id": "T09",
+      "operation": "normalize",
+      "input": "trailing   ",
+      "expected": "trailing",
+      "prompts": {
+        "conventional": "Normalize whitespace in this string: \"trailing   \". Return only the resulting string.",
+        "emoji_shorthand": "🧹(\"trailing   \")",
+        "semantic_refs": "workflow.text.normalize@1.0.0(\"trailing   \")"
+      },
+      "measurements": null
+    },
+    {
+      "task_id": "T10",
+      "operation": "normalize",
+      "input": "repeat     repeat",
+      "expected": "repeat repeat",
+      "prompts": {
+        "conventional": "Normalize whitespace in this string: \"repeat     repeat\". Return only the resulting string.",
+        "emoji_shorthand": "🧹(\"repeat     repeat\")",
+        "semantic_refs": "workflow.text.normalize@1.0.0(\"repeat     repeat\")"
+      },
+      "measurements": null
+    },
+    {
+      "task_id": "T11",
+      "operation": "word_count",
+      "input": "",
+      "expected": "0",
+      "prompts": {
+        "conventional": "Count whitespace-delimited words in this string: \"\". Return only the integer.",
+        "emoji_shorthand": "🧮(\"\")",
+        "semantic_refs": "workflow.text.word_count@1.0.0(\"\")"
+      },
+      "measurements": null
+    },
+    {
+      "task_id": "T12",
+      "operation": "word_count",
+      "input": "one",
+      "expected": "1",
+      "prompts": {
+        "conventional": "Count whitespace-delimited words in this string: \"one\". Return only the integer.",
+        "emoji_shorthand": "🧮(\"one\")",
+        "semantic_refs": "workflow.text.word_count@1.0.0(\"one\")"
+      },
+      "measurements": null
+    },
+    {
+      "task_id": "T13",
+      "operation": "word_count",
+      "input": "one two three",
+      "expected": "3",
+      "prompts": {
+        "conventional": "Count whitespace-delimited words in this string: \"one two three\". Return only the integer.",
+        "emoji_shorthand": "🧮(\"one two three\")",
+        "semantic_refs": "workflow.text.word_count@1.0.0(\"one two three\")"
+      },
+      "measurements": null
+    },
+    {
+      "task_id": "T14",
+      "operation": "word_count",
+      "input": "one   two\tthree",
+      "expected": "3",
+      "prompts": {
+        "conventional": "Count whitespace-delimited words in this string: \"one   two\\tthree\". Return only the integer.",
+        "emoji_shorthand": "🧮(\"one   two\\tthree\")",
+        "semantic_refs": "workflow.text.word_count@1.0.0(\"one   two\\tthree\")"
+      },
+      "measurements": null
+    },
+    {
+      "task_id": "T15",
+      "operation": "word_count",
+      "input": "  leading and trailing  ",
+      "expected": "4",
+      "prompts": {
+        "conventional": "Count whitespace-delimited words in this string: \"  leading and trailing  \". Return only the integer.",
+        "emoji_shorthand": "🧮(\"  leading and trailing  \")",
+        "semantic_refs": "workflow.text.word_count@1.0.0(\"  leading and trailing  \")"
+      },
+      "measurements": null
+    },
+    {
+      "task_id": "T16",
+      "operation": "word_count",
+      "input": "emoji 🧮 workflow",
+      "expected": "3",
+      "prompts": {
+        "conventional": "Count whitespace-delimited words in this string: \"emoji 🧮 workflow\". Return only the integer.",
+        "emoji_shorthand": "🧮(\"emoji 🧮 workflow\")",
+        "semantic_refs": "workflow.text.word_count@1.0.0(\"emoji 🧮 workflow\")"
+      },
+      "measurements": null
+    },
+    {
+      "task_id": "T17",
+      "operation": "word_count",
+      "input": "repeat repeat repeat",
+      "expected": "3",
+      "prompts": {
+        "conventional": "Count whitespace-delimited words in this string: \"repeat repeat repeat\". Return only the integer.",
+        "emoji_shorthand": "🧮(\"repeat repeat repeat\")",
+        "semantic_refs": "workflow.text.word_count@1.0.0(\"repeat repeat repeat\")"
+      },
+      "measurements": null
+    },
+    {
+      "task_id": "T18",
+      "operation": "word_count",
+      "input": "\nalpha\nbeta\ngamma\n",
+      "expected": "3",
+      "prompts": {
+        "conventional": "Count whitespace-delimited words in this string: \"\\nalpha\\nbeta\\ngamma\\n\". Return only the integer.",
+        "emoji_shorthand": "🧮(\"\\nalpha\\nbeta\\ngamma\\n\")",
+        "semantic_refs": "workflow.text.word_count@1.0.0(\"\\nalpha\\nbeta\\ngamma\\n\")"
+      },
+      "measurements": null
+    },
+    {
+      "task_id": "T19",
+      "operation": "word_count",
+      "input": "punctuation, stays! attached?",
+      "expected": "2",
+      "prompts": {
+        "conventional": "Count whitespace-delimited words in this string: \"punctuation, stays! attached?\". Return only the integer.",
+        "emoji_shorthand": "🧮(\"punctuation, stays! attached?\")",
+        "semantic_refs": "workflow.text.word_count@1.0.0(\"punctuation, stays! attached?\")"
+      },
+      "measurements": null
+    },
+    {
+      "task_id": "T20",
+      "operation": "word_count",
+      "input": "a  b   c    d",
+      "expected": "4",
+      "prompts": {
+        "conventional": "Count whitespace-delimited words in this string: \"a  b   c    d\". Return only the integer.",
+        "emoji_shorthand": "🧮(\"a  b   c    d\")",
+        "semantic_refs": "workflow.text.word_count@1.0.0(\"a  b   c    d\")"
+      },
+      "measurements": null
+    }
+  ]
+}
