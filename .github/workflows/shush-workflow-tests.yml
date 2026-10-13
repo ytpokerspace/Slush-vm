@@ -8,15 +8,17 @@ on:
       - "tools/validate_benchmark_tasks.py"
       - "tools/generate_c_registry.py"
       - "tools/export_benchmark_prompts.py"
+      - "tools/run_llm_benchmark.py"
+      - "tools/assemble_benchmark_results.py"
       - "c/generated_registry.h"
-      - "tests/test_workflow_engine.py"
-      - "tests/test_benchmark_report.py"
+      - "tests/**"
       - "benchmarks/**"
       - "c/**"
       - "registry/**"
       - "examples/**"
       - "tools/validate_registry.py"
       - ".github/workflows/shush-workflow-tests.yml"
+      - ".github/workflows/shush-live-benchmark.yml"
   pull_request:
     paths:
       - "tools/workflow_engine.py"
@@ -25,8 +27,10 @@ on:
       - "c/**"
       - "benchmarks/**"
       - "tools/benchmark_report.py"
-      - "tests/test_workflow_engine.py"
-      - "tests/test_benchmark_report.py"
+      - "tools/run_llm_benchmark.py"
+      - "tools/assemble_benchmark_results.py"
+      - "tools/export_benchmark_prompts.py"
+      - "tests/**"
       - "registry/**"
       - "examples/**"
       - "tools/validate_registry.py"
@@ -65,3 +69,5 @@ jobs:
         run: |
           python tools/export_benchmark_prompts.py --output /tmp/shush_20_prompts.jsonl
           test "$(wc -l < /tmp/shush_20_prompts.jsonl)" -eq 60
+      - name: Verify live runner defaults to no network calls
+        run: python tools/run_llm_benchmark.py --max-calls 1
