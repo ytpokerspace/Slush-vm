@@ -4,7 +4,9 @@ on:
   push:
     paths:
       - "tools/workflow_engine.py"
+      - "tools/benchmark_report.py"
       - "tests/test_workflow_engine.py"
+      - "tests/test_benchmark_report.py"
       - "registry/**"
       - "examples/**"
       - "tools/validate_registry.py"
