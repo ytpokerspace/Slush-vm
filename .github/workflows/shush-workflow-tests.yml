@@ -1,0 +1,40 @@
+name: SHUSH workflow prototype checks
+
+on:
+  push:
+    paths:
+      - "tools/workflow_engine.py"
+      - "tests/test_workflow_engine.py"
+      - "registry/**"
+      - "examples/**"
+      - "tools/validate_registry.py"
+      - ".github/workflows/shush-workflow-tests.yml"
+  pull_request:
+    paths:
+      - "tools/workflow_engine.py"
+      - "tests/test_workflow_engine.py"
+      - "registry/**"
+      - "examples/**"
+      - "tools/validate_registry.py"
+      - ".github/workflows/shush-workflow-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prototype-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate registry and vocabulary
+        run: python tools/validate_registry.py
+      - name: Run workflow engine tests
+        run: python -m unittest discover -s tests -p 'test_workflow_engine.py' -v
+      - name: Run emoji workflow example
+        run: python tools/workflow_engine.py
