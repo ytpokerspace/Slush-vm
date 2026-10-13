@@ -1773,6 +1773,20 @@
       "category": "security",
       "meaning": "Controlled environment.",
       "platform": "portable"
+    },
+    {
+      "id": "workflow.text.normalize",
+      "symbol": "🧹",
+      "category": "workflow",
+      "meaning": "Workflow alias for deterministic whitespace normalization; resolves through registry/workflow_aliases.json.",
+      "platform": "portable"
+    },
+    {
+      "id": "workflow.text.word_count",
+      "symbol": "🧮",
+      "category": "workflow",
+      "meaning": "Workflow alias for deterministic whitespace-delimited word counting; resolves through registry/workflow_aliases.json.",
+      "platform": "portable"
     }
   ]
 }
