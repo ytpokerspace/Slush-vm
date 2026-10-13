@@ -172,7 +172,7 @@ static int expect_status(const char *label, ShushStatus actual, ShushStatus expe
 
 static int self_test(void) {
     int passed = 0, total = 0, ok = 1;
-    const Alias *alias = NULL;
+    const Capability *alias = NULL;
     char *s = NULL;
     size_t n = 0;
     const char *out_type = NULL;
