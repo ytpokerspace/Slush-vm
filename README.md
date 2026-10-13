@@ -12,6 +12,7 @@ SHUSH is an emoji-native surface language; SHUSHOS is the proposed runtime/contr
 - [Security and execution model](docs/SECURITY_MODEL.md)
 - [Registry validator](tools/validate_registry.py)
 - [Standalone C capability dispatcher](c/shush_capability_vm.c)
+- [Implementation status and remaining gates](docs/IMPLEMENTATION_STATUS.md)
 - [Live benchmark run guide](docs/RUN_LIVE_BENCHMARK.md)
 - [Benchmark runner](tools/run_llm_benchmark.py)
 - [Benchmark result assembler](tools/assemble_benchmark_results.py)
