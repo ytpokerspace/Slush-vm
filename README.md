@@ -11,10 +11,15 @@ SHUSH is an emoji-native surface language; SHUSHOS is the proposed runtime/contr
 - [Platform registries](docs/PLATFORM_REGISTRIES.md)
 - [Security and execution model](docs/SECURITY_MODEL.md)
 - [Registry validator](tools/validate_registry.py)
+- [Standalone C capability dispatcher](c/shush_capability_vm.c)
+- [Live benchmark run guide](docs/RUN_LIVE_BENCHMARK.md)
+- [Benchmark runner](tools/run_llm_benchmark.py)
+- [Benchmark result assembler](tools/assemble_benchmark_results.py)
+- [Benchmark protocol](docs/BENCHMARK_PROTOCOL.md)
 
 ## Status
 
-These are working design drafts. Manifest entries are marked planned; that does not mean the parser, native capability, or platform integration already exists. Check implementation and test status before relying on a capability.
+The language and platform documents remain design drafts. A standalone C11 capability-dispatch prototype, offline Python workflow demo, and benchmark harness are implemented and tested in CI. They are not yet integrated into a complete SHUSH parser/full VM. Manifest entries marked planned are not implemented capabilities; check implementation and test status before relying on one.
 
 The minimal registry scaffold is tracked separately in [PR #1](https://github.com/ytpokerspace/Slush-vm/pull/1). This documentation branch does not replace or merge that work.
 
