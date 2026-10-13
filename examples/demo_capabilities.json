@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0.0",
+  "purpose": "Offline demonstration-only capability contracts. Keep separate from production registry/capabilities.json.",
+  "capabilities": [
+    {
+      "id": "text.normalize",
+      "version": "1.0.0",
+      "summary": "Collapse runs of whitespace to single spaces.",
+      "inputs": {
+        "text": "STR"
+      },
+      "outputs": {
+        "text": "STR"
+      },
+      "implementation": "tools.workflow_engine:demo_normalize",
+      "permissions": [],
+      "platforms": [
+        "portable"
+      ],
+      "status": "tested",
+      "tests": {
+        "status": "passed",
+        "cases": [
+          "test_composes_two_steps_and_passes_output"
+        ]
+      }
+    },
+    {
+      "id": "text.word_count",
+      "version": "1.0.0",
+      "summary": "Count whitespace-delimited words.",
+      "inputs": {
+        "text": "STR"
+      },
+      "outputs": {
+        "count": "NUM"
+      },
+      "implementation": "tools.workflow_engine:demo_word_count",
+      "permissions": [],
+      "platforms": [
+        "portable"
+      ],
+      "status": "tested",
+      "tests": {
+        "status": "passed",
+        "cases": [
+          "test_composes_two_steps_and_passes_output"
+        ]
+      }
+    }
+  ]
+}
