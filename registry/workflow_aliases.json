@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "purpose": "Explicit workflow-namespace emoji aliases for the offline reference demo. These are not claims that the production SHUSHOS capabilities are implemented.",
+  "resolution_policy": {
+    "namespace_required": true,
+    "implicit_fallback": false,
+    "ambiguous_alias": "E_ALIAS_AMBIGUOUS"
+  },
+  "aliases": [
+    {
+      "symbol": "🧹",
+      "namespace": "workflow",
+      "vocabulary_id": "workflow.text.normalize",
+      "capability_id": "text.normalize",
+      "version": "1.0.0"
+    },
+    {
+      "symbol": "🧮",
+      "namespace": "workflow",
+      "vocabulary_id": "workflow.text.word_count",
+      "capability_id": "text.word_count",
+      "version": "1.0.0"
+    }
+  ]
+}
