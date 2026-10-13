@@ -14,7 +14,9 @@ on:
   pull_request:
     paths:
       - "tools/workflow_engine.py"
+      - "tools/benchmark_report.py"
       - "tests/test_workflow_engine.py"
+      - "tests/test_benchmark_report.py"
       - "registry/**"
       - "examples/**"
       - "tools/validate_registry.py"
@@ -37,6 +39,6 @@ jobs:
       - name: Validate registry and vocabulary
         run: python tools/validate_registry.py
       - name: Run workflow engine tests
-        run: python -m unittest discover -s tests -p 'test_workflow_engine.py' -v
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
       - name: Run emoji workflow example
         run: python tools/workflow_engine.py
