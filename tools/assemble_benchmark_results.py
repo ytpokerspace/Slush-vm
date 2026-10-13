@@ -7,7 +7,7 @@ from pathlib import Path
 
 VARIANTS = ("conventional", "emoji_shorthand", "semantic_refs")
 REQUIRED = ("task_id", "variant", "input_tokens", "output_tokens", "correct", "latency_ms",
-            "model_returned", "measurement_source")
+            "model_returned", "model_requested", "base_url", "system_prompt", "measurement_source")
 
 def assemble(raw_path: str, tasks_path: str) -> dict:
     rows = []
