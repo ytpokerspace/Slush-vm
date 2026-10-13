@@ -1,0 +1,72 @@
+name: SHUSH live LLM benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: "Exact provider model ID to test"
+        required: true
+        type: string
+      base_url:
+        description: "OpenAI-compatible API base URL"
+        required: true
+        default: "https://api.openai.com/v1"
+        type: string
+      max_calls:
+        description: "Number of calls to allow (1–60); each call may incur charges"
+        required: true
+        default: 3
+        type: number
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    if: ${{ inputs.max_calls >= 1 && inputs.max_calls <= 60 }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify benchmark files
+        run: |
+          python tools/validate_benchmark_tasks.py benchmarks/shush_20_tasks.json
+          python tools/generate_c_registry.py --check
+      - name: Run opt-in model calls
+        env:
+          SHUSH_BENCHMARK_API_KEY: ${{ secrets.SHUSH_BENCHMARK_API_KEY }}
+          SHUSH_BENCHMARK_MODEL: ${{ inputs.model }}
+          SHUSH_BENCHMARK_BASE_URL: ${{ inputs.base_url }}
+        run: |
+          test -n "$SHUSH_BENCHMARK_API_KEY" || {
+            echo "Missing repository secret SHUSH_BENCHMARK_API_KEY."
+            exit 2
+          }
+          python tools/run_llm_benchmark.py --run \
+            --model "$SHUSH_BENCHMARK_MODEL" \
+            --base-url "$SHUSH_BENCHMARK_BASE_URL" \
+            --max-calls "${{ inputs.max_calls }}" \
+            --output /tmp/shush_raw_results.jsonl
+      - name: Assemble full results
+        if: ${{ inputs.max_calls == 60 }}
+        run: |
+          python tools/assemble_benchmark_results.py /tmp/shush_raw_results.jsonl \
+            --tasks benchmarks/shush_20_tasks.json \
+            --output /tmp/shush_measured_results.json
+          python tools/benchmark_report.py /tmp/shush_measured_results.json \
+            --output /tmp/shush_summary.json
+      - name: Upload raw measurements and summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shush-benchmark-results
+          path: |
+            /tmp/shush_raw_results.jsonl
+            /tmp/shush_measured_results.json
+            /tmp/shush_summary.json
+          if-no-files-found: warn
+          retention-days: 14
