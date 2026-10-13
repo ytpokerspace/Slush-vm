@@ -39,6 +39,8 @@ def render():
             raise ValueError(f"alias {key!r} has no exact demo capability contract")
         if cap.get("status") != "tested" or cap.get("tests", {}).get("status") not in ("passed", "passed_with_notes"):
             raise ValueError(f"alias {key!r} points to an unverified demo capability")
+        if cap.get("id") not in ("text.normalize", "text.word_count"):
+            raise ValueError(f"no C handler is registered for {cap.get('id')}")
         if cap.get("inputs") != {"text": "STR"}:
             raise ValueError(f"unsupported C demo input contract for {cap.get('id')}")
         if cap.get("id") == "text.normalize" and cap.get("outputs") != {"text": "STR"}:
