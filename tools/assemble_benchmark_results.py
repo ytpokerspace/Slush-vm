@@ -37,18 +37,22 @@ def assemble(raw_path: str, tasks_path: str) -> dict:
     by_key = {}
     models = set()
     systems = set()
+    configurations = set()
     for row in rows:
         key = (row["task_id"], row["variant"])
         if key in by_key:
             raise ValueError(f"duplicate measurement: {key[0]}/{key[1]}")
         by_key[key] = row
         models.add(row["model_returned"])
+        configurations.add((row.get("model_requested"), row.get("base_url")))
         if "system_prompt" in row:
             systems.add(row["system_prompt"])
     if len(models) != 1:
         raise ValueError(f"expected one returned model across the run, found {sorted(models)}")
     if len(systems) > 1:
         raise ValueError("system prompt changed within this run")
+    if len(configurations) != 1:
+        raise ValueError("requested model or API base URL changed within this run")
     task_doc = json.loads(Path(tasks_path).read_text(encoding="utf-8"))
     tasks = task_doc.get("tasks")
     if not isinstance(tasks, list) or not tasks:
