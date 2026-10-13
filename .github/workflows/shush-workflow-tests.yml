@@ -54,7 +54,6 @@ jobs:
         run: python tools/workflow_engine.py
       - name: Generate and verify C registry
         run: |
-          python tools/generate_c_registry.py
           python tools/generate_c_registry.py --check
       - name: Compile C capability VM
         run: cc -std=c11 -Wall -Wextra -Werror -pedantic c/shush_capability_vm.c -o /tmp/shush-capvm
