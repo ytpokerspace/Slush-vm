@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Minimal deterministic SHUSH workflow runner.
+"""Deterministic SHUSH workflow runner with vocabulary-backed emoji aliases.
 
-Emoji are surface aliases; canonical capability IDs and exact versions carry
-identity. This prototype intentionally executes only explicitly registered
-Python handlers and never evaluates generated code.
+This reference runner executes only explicitly registered Python handlers.
+Emoji are resolved through registry/vocabulary.json and
+registry/workflow_aliases.json to exact capability IDs and versions.
 """
 from __future__ import annotations
 
@@ -12,6 +12,8 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Mapping
+
+ROOT = Path(__file__).resolve().parents[1]
 
 class WorkflowError(RuntimeError):
     def __init__(self, code: str, message: str):
@@ -22,10 +24,15 @@ Handler = Callable[[dict[str, Any]], Any]
 _REF = re.compile(r"^\$([A-Za-z_][A-Za-z0-9_-]*)\.([A-Za-z_][A-Za-z0-9_-]*)$")
 
 def load_json(path: str | Path) -> dict[str, Any]:
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except FileNotFoundError as exc:
+        raise WorkflowError("E_FILE_NOT_FOUND", str(path)) from exc
+    except json.JSONDecodeError as exc:
+        raise WorkflowError("E_JSON_INVALID", f"{path}:{exc.lineno}:{exc.colno}: {exc.msg}") from exc
     if not isinstance(data, dict):
-        raise WorkflowError("E_SCHEMA", "top-level JSON value must be an object")
+        raise WorkflowError("E_SCHEMA", f"{path}: top-level JSON value must be an object")
     return data
 
 def _type_ok(value: Any, type_name: str) -> bool:
@@ -38,7 +45,7 @@ def _type_ok(value: Any, type_name: str) -> bool:
         "JSON": lambda x: True,
         "ANY": lambda x: True,
     }
-    return checks.get(type_name, lambda x: True)(value)
+    return checks.get(type_name, lambda x: False)(value)
 
 @dataclass(frozen=True)
 class Capability:
@@ -49,30 +56,92 @@ class Capability:
     permissions: tuple[str, ...]
     status: str
 
+class EmojiResolver:
+    """Resolve an emoji in an explicit namespace, then map it to an exact capability."""
+
+    def __init__(self, vocabulary: Mapping[str, Any], aliases: Mapping[str, Any]):
+        self.vocabulary = list(vocabulary.get("entries", []))
+        self.aliases = list(aliases.get("aliases", []))
+
+    def resolve(self, symbol: str, namespace: str) -> dict[str, str]:
+        candidates = [
+            a for a in self.aliases
+            if a.get("symbol") == symbol and a.get("namespace") == namespace
+        ]
+        if not candidates:
+            # Distinguish a known vocabulary token from a missing emoji alias.
+            known = [
+                e for e in self.vocabulary
+                if e.get("symbol") == symbol and e.get("category") == namespace
+            ]
+            if known:
+                raise WorkflowError("E_ALIAS_NOT_REGISTERED",
+                                    f"{symbol} is vocabulary syntax in {namespace}, not a workflow capability alias")
+            raise WorkflowError("E_ALIAS_NOT_FOUND", f"{symbol} in namespace {namespace}")
+        if len(candidates) != 1:
+            targets = sorted(f"{a.get('capability_id')}@{a.get('version')}" for a in candidates)
+            raise WorkflowError("E_ALIAS_AMBIGUOUS", f"{symbol} in {namespace}: {targets}")
+        alias = candidates[0]
+        vocab_matches = [
+            e for e in self.vocabulary
+            if e.get("id") == alias.get("vocabulary_id")
+            and e.get("symbol") == symbol
+            and e.get("category") == namespace
+        ]
+        if len(vocab_matches) != 1:
+            raise WorkflowError("E_VOCABULARY_MISMATCH",
+                                f"alias {symbol} must match exactly one vocabulary entry")
+        for field in ("capability_id", "version"):
+            if not isinstance(alias.get(field), str) or not alias[field]:
+                raise WorkflowError("E_ALIAS_SCHEMA", f"alias {symbol} missing {field}")
+        return {"id": alias["capability_id"], "version": alias["version"]}
+
 class WorkflowEngine:
-    """Execute a linear workflow with exact resolution and explicit grants."""
+    """Execute linear workflows with exact resolution, typed contracts, and permission grants."""
 
     def __init__(self, registry: Mapping[str, Any], handlers: Mapping[str, Handler],
-                 granted_permissions: set[str] | None = None):
+                 granted_permissions: set[str] | None = None,
+                 resolver: EmojiResolver | None = None):
         self.handlers = dict(handlers)
         self.grants = set(granted_permissions or ())
+        self.resolver = resolver
         self.capabilities: dict[tuple[str, str], Capability] = {}
         for raw in registry.get("capabilities", []):
-            cap = Capability(
-                id=raw["id"], version=raw["version"],
-                inputs=raw.get("inputs", {}), outputs=raw.get("outputs", {}),
-                permissions=tuple(raw.get("permissions", [])),
-                status=raw.get("status", "planned"),
-            )
+            try:
+                cap = Capability(
+                    id=raw["id"], version=raw["version"],
+                    inputs=raw.get("inputs", {}), outputs=raw.get("outputs", {}),
+                    permissions=tuple(raw.get("permissions", [])),
+                    status=raw.get("status", "planned"),
+                )
+            except (KeyError, TypeError) as exc:
+                raise WorkflowError("E_REGISTRY_SCHEMA", f"invalid capability contract: {exc}") from exc
             key = (cap.id, cap.version)
             if key in self.capabilities:
                 raise WorkflowError("E_DUPLICATE_CAPABILITY", f"{cap.id}@{cap.version}")
             self.capabilities[key] = cap
 
+    def _reference_for_step(self, step: Mapping[str, Any]) -> dict[str, str]:
+        raw = step.get("capability")
+        symbol = step.get("symbol")
+        if symbol is not None:
+            namespace = step.get("namespace")
+            if not isinstance(namespace, str) or not namespace:
+                raise WorkflowError("E_NAMESPACE_REQUIRED", "emoji steps must declare namespace")
+            if self.resolver is None:
+                raise WorkflowError("E_RESOLVER_UNAVAILABLE", "load vocabulary and workflow aliases first")
+            resolved = self.resolver.resolve(symbol, namespace)
+            if raw is not None and raw != resolved:
+                raise WorkflowError("E_ALIAS_CONFLICT", f"{symbol} resolves to {resolved}, not {raw}")
+            return resolved
+        if not isinstance(raw, dict):
+            raise WorkflowError("E_BAD_REFERENCE", "step needs capability {id, version} or symbol + namespace")
+        return raw
+
     def resolve(self, ref: Mapping[str, Any]) -> Capability:
         cap_id, version = ref.get("id"), ref.get("version")
         if not isinstance(cap_id, str) or not isinstance(version, str):
-            raise WorkflowError("E_BAD_REFERENCE", "each step needs string id and exact version")
+            raise WorkflowError("E_BAD_REFERENCE", "canonical capability ID and exact version are required")
         cap = self.capabilities.get((cap_id, version))
         if cap is None:
             raise WorkflowError("E_CAPABILITY_NOT_FOUND", f"{cap_id}@{version}")
@@ -115,7 +184,7 @@ class WorkflowEngine:
             step_id = step.get("id")
             if not isinstance(step_id, str) or not step_id or step_id in results:
                 raise WorkflowError("E_STEP_ID", "step IDs must be non-empty and unique")
-            cap = self.resolve(step.get("capability", {}))
+            cap = self.resolve(self._reference_for_step(step))
             args = self._resolve_value(step.get("args", {}), results)
             if not isinstance(args, dict):
                 raise WorkflowError("E_INPUT_SCHEMA", f"{step_id}: args must be an object")
@@ -138,31 +207,31 @@ class WorkflowEngine:
                     if not _type_ok(output[name], expected):
                         raise WorkflowError("E_OUTPUT_TYPE", f"{step_id}.{name} expected {expected}")
             results[step_id] = output
-            trace.append({"step": step_id, "capability": cap.id, "version": cap.version, "status": "ok"})
+            trace.append({"step": step_id, "symbol": step.get("symbol"),
+                          "capability": cap.id, "version": cap.version, "status": "ok"})
         return {"status": "ok", "results": results, "trace": trace}
 
-def demo_engine() -> WorkflowEngine:
-    """Small offline demo; these handlers are examples, not production integrations."""
-    registry = {"capabilities": [
-        {"id": "text.normalize", "version": "1.0.0", "inputs": {"text": "STR"},
-         "outputs": {"text": "STR"}, "permissions": [], "status": "tested"},
-        {"id": "text.word_count", "version": "1.0.0", "inputs": {"text": "STR"},
-         "outputs": {"count": "NUM"}, "permissions": [], "status": "tested"},
-    ]}
+def demo_engine(root: str | Path = ROOT) -> WorkflowEngine:
+    """Load the sample registry and real project vocabulary/alias manifests."""
+    root = Path(root)
+    registry = load_json(root / "examples" / "demo_capabilities.json")
+    vocabulary = load_json(root / "registry" / "vocabulary.json")
+    aliases = load_json(root / "registry" / "workflow_aliases.json")
+    resolver = EmojiResolver(vocabulary, aliases)
     handlers = {
         "text.normalize": lambda a: {"text": " ".join(a["text"].split())},
         "text.word_count": lambda a: {"count": len(a["text"].split())},
     }
-    return WorkflowEngine(registry, handlers)
+    return WorkflowEngine(registry, handlers, resolver=resolver)
 
 def main() -> int:
     import argparse
-    parser = argparse.ArgumentParser(description="Run a SHUSH JSON workflow (offline demo registry).")
-    parser.add_argument("workflow", help="path to workflow JSON")
+    parser = argparse.ArgumentParser(description="Run a SHUSH workflow using the vocabulary-backed offline demo registry.")
+    parser.add_argument("workflow", nargs="?", default="examples/normalize_and_count.workflow.json")
     args = parser.parse_args()
     try:
         result = demo_engine().run(load_json(args.workflow))
-    except (OSError, json.JSONDecodeError, WorkflowError) as exc:
+    except (OSError, WorkflowError) as exc:
         print(str(exc))
         return 1
     print(json.dumps(result, ensure_ascii=False, indent=2))
