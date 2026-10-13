@@ -1,18 +1,22 @@
 {
   "name": "normalize-and-count",
-  "description": "Offline example of composing exact, tested semantic capabilities.",
+  "description": "Vocabulary-backed emoji workflow: 🧹 normalizes text, then 🧮 counts words from the previous step output.",
   "steps": [
     {
       "id": "clean",
       "symbol": "🧹",
-      "capability": {"id": "text.normalize", "version": "1.0.0"},
-      "args": {"text": "  hello   emoji   engine  "}
+      "namespace": "workflow",
+      "args": {
+        "text": "  hello   emoji   engine  "
+      }
     },
     {
       "id": "count",
-      "symbol": "🔢",
-      "capability": {"id": "text.word_count", "version": "1.0.0"},
-      "args": {"text": "$clean.text"}
+      "symbol": "🧮",
+      "namespace": "workflow",
+      "args": {
+        "text": "$clean.text"
+      }
     }
   ]
 }
