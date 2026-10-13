@@ -33,26 +33,16 @@ typedef struct {
     const char *output_type;
     const char *required_permission;
     const char *handler;
-} Capability;
-
-typedef struct {
     const char *symbol;
     const char *name_space;
-    const char *capability_id;
-    const char *version;
-} Alias;
+} Capability;
+
+#include "generated_registry.h"
 
 static const Capability CAPABILITIES[] = {
-    {"text.normalize", "1.0.0", "tested", "STR", "STR", PERM_EXEC, "normalize"},
-    {"text.word_count", "1.0.0", "tested", "STR", "NUM", PERM_EXEC, "word_count"}
+    SHUSH_GENERATED_CAPABILITY_ROWS
 };
 static const size_t CAPABILITY_COUNT = sizeof(CAPABILITIES) / sizeof(CAPABILITIES[0]);
-
-static const Alias ALIASES[] = {
-    {"🧹", "workflow", "text.normalize", "1.0.0"},
-    {"🧮", "workflow", "text.word_count", "1.0.0"}
-};
-static const size_t ALIAS_COUNT = sizeof(ALIASES) / sizeof(ALIASES[0]);
 
 static const char *status_name(ShushStatus status) {
     switch (status) {
@@ -80,14 +70,14 @@ static const Capability *find_capability(const char *id) {
 }
 
 static ShushStatus resolve_alias(const char *symbol, const char *name_space,
-                                 const Alias **out) {
+                                 const Capability **out) {
     size_t i, matches = 0;
-    const Alias *found = NULL;
+    const Capability *found = NULL;
     if (!name_space || !*name_space) return E_NAMESPACE_REQUIRED;
-    for (i = 0; i < ALIAS_COUNT; ++i) {
-        if (strcmp(ALIASES[i].symbol, symbol) == 0 &&
-            strcmp(ALIASES[i].name_space, name_space) == 0) {
-            found = &ALIASES[i];
+    for (i = 0; i < CAPABILITY_COUNT; ++i) {
+        if (strcmp(CAPABILITIES[i].symbol, symbol) == 0 &&
+            strcmp(CAPABILITIES[i].name_space, name_space) == 0) {
+            found = &CAPABILITIES[i];
             ++matches;
         }
     }
@@ -136,13 +126,13 @@ static ShushStatus invoke(const char *symbol, const char *name_space,
                           const char *permission, const char *input,
                           char **string_result, size_t *number_result,
                           const char **output_type) {
-    const Alias *alias = NULL;
+    const Capability *alias = NULL;
     const Capability *cap;
     ShushStatus status = resolve_alias(symbol, name_space, &alias);
     if (status != SHUSH_OK) return status;
 
     /* If a caller supplied canonical identity, it must match the alias exactly. */
-    if (!canonical_id || strcmp(alias->capability_id, canonical_id) != 0)
+    if (!canonical_id || strcmp(alias->id, canonical_id) != 0)
         return E_CAPABILITY_NOT_FOUND;
     if (!version || strcmp(alias->version, version) != 0)
         return E_VERSION_MISMATCH;
