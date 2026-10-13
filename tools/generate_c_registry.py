@@ -15,7 +15,7 @@ def read_json(path):
 
 def cstr(value):
     # JSON string escaping is compatible with C string literals for these ASCII/Unicode strings.
-    return json.dumps(value, ensure_ascii=True)
+    return json.dumps(value, ensure_ascii=False)
 
 def render():
     vocab = read_json(ROOT / "registry/vocabulary.json")
