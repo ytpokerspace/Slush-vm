@@ -18,6 +18,10 @@ on:
     paths:
       - "tools/workflow_engine.py"
       - "tools/benchmark_report.py"
+      - "tools/validate_benchmark_tasks.py"
+      - "c/**"
+      - "benchmarks/**"
+      - "tools/benchmark_report.py"
       - "tests/test_workflow_engine.py"
       - "tests/test_benchmark_report.py"
       - "registry/**"
@@ -45,3 +49,9 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_*.py' -v
       - name: Run emoji workflow example
         run: python tools/workflow_engine.py
+      - name: Compile C capability VM
+        run: cc -std=c11 -Wall -Wextra -Werror -pedantic c/shush_capability_vm.c -o /tmp/shush-capvm
+      - name: Run C capability VM self-tests
+        run: /tmp/shush-capvm --self-test
+      - name: Validate benchmark task definitions
+        run: python tools/validate_benchmark_tasks.py benchmarks/shush_20_tasks.json
