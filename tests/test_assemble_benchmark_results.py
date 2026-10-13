@@ -31,6 +31,8 @@ class AssembleBenchmarkResultsTests(unittest.TestCase):
                     "correct": True,
                     "latency_ms": 5.0,
                     "model_returned": "test-model",
+                    "model_requested": "test-model",
+                    "base_url": "https://example.invalid/v1",
                     "measurement_source": "provider_usage_metadata",
                     "system_prompt": "fixed",
                 })
