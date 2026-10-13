@@ -1,44 +1,41 @@
-# SHUSH Workflow Engine — first executable slice
+# SHUSH Workflow Engine — vocabulary-integrated prototype
 
-This is a deliberately small, offline reference implementation for deterministic
-workflow composition. It is designed to sit beside the existing SHUSHOS registry;
-it does not replace the C VM or claim that every registry capability is implemented.
+This offline reference runner now resolves emoji through the project's
+`registry/vocabulary.json` and explicit `registry/workflow_aliases.json`
+before resolving an exact, versioned capability in
+`examples/demo_capabilities.json`.
 
 ## Run
 
 From the repository root:
 
 ```sh
-python3 -m unittest tests.test_workflow_engine -v
-python3 tools/workflow_engine.py examples/normalize_and_count.workflow.json
+python3 -m unittest discover -s tests -p 'test_workflow_engine.py' -v
+python3 tools/workflow_engine.py
 ```
 
-The sample engine has two pure, in-memory handlers: `text.normalize@1.0.0`
-and `text.word_count@1.0.0`. No network, filesystem mutation, shell execution,
-or model API is used.
+The default example should normalize a string and count three words. Workflow
+steps use `symbol` and explicit `namespace`; prior-step references use
+`$step_id.field`. The engine checks that each alias maps to exactly one
+matching vocabulary entry and one exact capability version.
 
-## Contract
+## Safety and failure behavior
 
-- Canonical capability ID **and exact version** are required.
-- Only capabilities with `status: tested` can execute.
-- Every required permission must be explicitly granted.
-- Inputs and outputs are checked against declared primitive types.
-- Prior-step output references use `$step_id.field`.
-- Unknown, untested, unauthorized, malformed, or type-incompatible steps fail
-  with a stable error code; there is no fallback resolver.
-- Handlers are explicitly supplied Python callables; workflow text is never
-  evaluated as Python or shell code.
+- No implicit alias fallback; namespace is mandatory.
+- Unknown emoji, missing aliases, vocabulary mismatches, and ambiguous aliases
+  produce explicit error codes.
+- If both emoji and canonical capability are supplied, they must resolve to
+  the same ID and version.
+- Only `tested` capabilities with registered handlers and granted permissions
+  execute; inputs and outputs are type-checked.
+- The workflow file is data, not Python or shell code.
 
-## Important limitation
+## Scope and honest limitations
 
-This is a local prototype, not a sandbox. A registered handler is trusted code.
-Do not register untrusted handlers. Resource limits, cancellation, nested
-composition, registry-schema integration, emoji parser integration, and C VM
-dispatch remain future work. The example's `symbol` field is descriptive;
-the current runner resolves canonical IDs, not emoji aliases.
-
-## Benchmark honesty
-
-Passing unit tests demonstrates these tested behaviors only. It does not prove
-token savings, improved model accuracy, production security, or performance
-advantages. Those require separate, controlled measurements.
+`examples/demo_capabilities.json` contains two pure, in-memory demonstration
+capabilities. Their `tested` status refers only to the unit-test contract in
+this small example; run the test suite to verify the current checkout.
+The main `registry/capabilities.json` still declares the production-facing
+capability contracts as `planned`. This prototype does not yet dispatch to
+the C VM, execute general SHUSH source, provide a security sandbox, or prove
+token savings. Do not register untrusted Python handlers.
