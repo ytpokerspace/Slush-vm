@@ -7,6 +7,7 @@ on:
       - "tools/benchmark_report.py"
       - "tools/validate_benchmark_tasks.py"
       - "tools/generate_c_registry.py"
+      - "tools/export_benchmark_prompts.py"
       - "c/generated_registry.h"
       - "tests/test_workflow_engine.py"
       - "tests/test_benchmark_report.py"
@@ -61,3 +62,7 @@ jobs:
         run: /tmp/shush-capvm --self-test
       - name: Validate benchmark task definitions
         run: python tools/validate_benchmark_tasks.py benchmarks/shush_20_tasks.json
+      - name: Export benchmark prompts
+        run: |
+          python tools/export_benchmark_prompts.py --output /tmp/shush_20_prompts.jsonl
+          test "$(wc -l < /tmp/shush_20_prompts.jsonl)" -eq 60
