@@ -36,7 +36,7 @@ def main():
                 }
             })
     Path(args.output).write_text(
-        "".join(json.dumps(row, ensure_ascii=False) + "\\n" for row in rows),
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
         encoding="utf-8"
     )
     print(f"Exported {len(rows)} prompts to {args.output}")
