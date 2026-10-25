@@ -8,6 +8,7 @@ between CLI calls, and emits diagnostics. Only the Python standard library is us
 from __future__ import annotations
 
 import json
+import math
 import sys
 from collections import Counter
 from dataclasses import dataclass, field
@@ -127,21 +128,28 @@ class Arc3EmojiSolver:
             if isinstance(action, dict):
                 raw = action.get("score", action.get("priority"))
                 if isinstance(raw, (int, float)) and not isinstance(raw, bool):
-                    score = float(raw)
+                    try:
+                        candidate_score = float(raw)
+                        if math.isfinite(candidate_score):
+                            score = candidate_score
+                    except (OverflowError, ValueError):
+                        score = None
             scored.append((score, index, action))
 
-        scored_with_values = [item for item in scored if item[0] is not None]
-        if scored_with_values:
-            candidates = sorted(scored_with_values, key=lambda item: (-item[0], item[1]))
-            chosen = next((a for _, _, a in candidates if stable_key(a) not in attempted), None)
-            if chosen is None:
-                chosen = candidates[0][2]
-            rationale = "highest provided score among legal actions"
-        else:
-            chosen = next((a for a in actions if stable_key(a) not in attempted), None)
-            if chosen is None:
-                chosen = actions[self.turns % len(actions)]
-            rationale = "first untried legal action for this state; deterministic fallback on exhaustion"
+        # Rank scored actions first, then unscored legal actions, preserving input order
+        # for ties. Never let one repeatedly-scored action starve other legal actions.
+        candidates = sorted(
+            scored,
+            key=lambda item: (
+                item[0] is None,
+                -(item[0] if item[0] is not None else 0.0),
+                item[1],
+            ),
+        )
+        chosen = next((a for _, _, a in candidates if stable_key(a) not in attempted), None)
+        if chosen is None:
+            chosen = candidates[0][2]
+        rationale = "highest provided score among untried legal actions; deterministic fallback on exhaustion"
 
         attempted.add(stable_key(chosen))
         self.turns += 1
