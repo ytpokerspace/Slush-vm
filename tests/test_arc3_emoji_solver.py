@@ -168,5 +168,69 @@ class Arc3EmojiSolverTests(unittest.TestCase):
         self.assertIn("invalid JSON input", json.loads(process.stdout)["error"])
 
 
+    def test_state_round_trip_preserves_attempts_and_turn_count(self):
+        solver = Arc3EmojiSolver()
+        observation = {"room": 1}
+        actions = ["left", "right"]
+        first = solver.choose_action(observation, actions)["action"]
+        restored = Arc3EmojiSolver.from_state(solver.to_state())
+        second = restored.choose_action(observation, actions)["action"]
+        self.assertNotEqual(first, second)
+        self.assertEqual(restored.turns, 2)
+
+    def test_history_reconstruction_skips_records_without_observation(self):
+        solver = Arc3EmojiSolver()
+        solver.restore_history([{"action": "left"}, {"observation": {"x": 1}, "action": "left"}])
+        chosen = solver.choose_action({"x": 1}, ["left", "right"])["action"]
+        self.assertEqual(chosen, "right")
+        self.assertEqual(solver.turns, 2)
+
+    def test_history_reconstruction_restores_revisit_detection(self):
+        solver = Arc3EmojiSolver(max_repeated_state=3)
+        history = [
+            {"observation": {"room": 1}, "action": "a"},
+            {"observation": {"room": 1}, "action": "b"},
+        ]
+        solver.restore_history(history)
+        result = solver.choose_action({"room": 1}, ["a", "b", "c"])
+        self.assertEqual(result["status"], "possible_loop")
+        self.assertEqual(result["diagnostics"]["state_revisits"], 2)
+
+    def test_invalid_saved_state_resets_safely(self):
+        solver = Arc3EmojiSolver.from_state({"schema_version": 999, "turns": 10})
+        self.assertEqual(solver.turns, 0)
+        self.assertEqual(solver.seen_states, {})
+
+    def test_saved_state_is_json_serializable(self):
+        solver = Arc3EmojiSolver()
+        solver.choose_action({"grid": [[0]]}, ["a", "b"])
+        self.assertEqual(json.loads(json.dumps(solver.to_state()))["schema_version"], 1)
+
+    def test_cli_emits_state_for_restart(self):
+        request = {"observation": {"room": 1}, "legal_actions": ["left", "right"]}
+        first = subprocess.run(
+            [sys.executable, "arc3/emoji_solver.py"],
+            input=json.dumps(request), text=True, capture_output=True, check=False,
+        )
+        self.assertEqual(first.returncode, 0, first.stderr)
+        first_result = json.loads(first.stdout)
+        second_request = {**request, "solver_state": first_result["solver_state"]}
+        second = subprocess.run(
+            [sys.executable, "arc3/emoji_solver.py"],
+            input=json.dumps(second_request), text=True, capture_output=True, check=False,
+        )
+        self.assertEqual(second.returncode, 0, second.stderr)
+        self.assertNotEqual(first_result["action"], json.loads(second.stdout)["action"])
+
+    def test_cli_rejects_non_array_history(self):
+        process = subprocess.run(
+            [sys.executable, "arc3/emoji_solver.py"],
+            input='{"observation":{},"legal_actions":[],"history":{}}',
+            text=True, capture_output=True, check=False,
+        )
+        self.assertEqual(process.returncode, 2)
+        self.assertIn("history must be a JSON array", json.loads(process.stdout)["error"])
+
+
 if __name__ == "__main__":
     unittest.main()
