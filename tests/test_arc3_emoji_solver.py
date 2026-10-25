@@ -2,7 +2,10 @@ import json
 import subprocess
 import sys
 import unittest
+from enum import Enum
+from types import SimpleNamespace
 
+from arc3.arc_agi_runner import frame_observation, to_jsonable
 from arc3.emoji_solver import Arc3EmojiSolver, EMOJI_PROGRAM, grid_summary, stable_key, state_key
 
 
@@ -230,6 +233,26 @@ class Arc3EmojiSolverTests(unittest.TestCase):
         )
         self.assertEqual(process.returncode, 2)
         self.assertIn("history must be a JSON array", json.loads(process.stdout)["error"])
+
+
+    def test_sdk_runner_helpers_import_without_optional_sdk(self):
+        self.assertTrue(callable(to_jsonable))
+        self.assertTrue(callable(frame_observation))
+
+    def test_sdk_runner_serializes_nested_enum_values(self):
+        class ExampleState(Enum):
+            ACTIVE = 1
+        result = to_jsonable({"state": ExampleState.ACTIVE, "values": [1, 2]})
+        self.assertEqual(result, {"state": "ACTIVE", "values": [1, 2]})
+
+    def test_frame_observation_preserves_state_and_progress(self):
+        class ExampleState(Enum):
+            WIN = 1
+        frame = SimpleNamespace(state=ExampleState.WIN, levels_completed=2, grid=[[0, 1]])
+        result = frame_observation(frame)
+        self.assertEqual(result["__arc3_state"], "WIN")
+        self.assertEqual(result["__arc3_levels_completed"], 2)
+        self.assertEqual(result["grid"], [[0, 1]])
 
 
 if __name__ == "__main__":
