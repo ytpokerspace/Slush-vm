@@ -2,9 +2,8 @@
 ARC-AGI-3 emoji-policy adapter for SHUSH/Slush-vm.
 
 This is a deterministic baseline policy adapter, not a claim of solved ARC-AGI-3
-tasks. It accepts a normalized observation and legal actions from an environment
-adapter, tracks repeated states, and chooses a legal action reproducibly.
-Only the Python standard library is required.
+tasks. It accepts normalized observations and legal actions, persists policy state
+between CLI calls, and emits diagnostics. Only the Python standard library is used.
 """
 from __future__ import annotations
 
@@ -14,12 +13,14 @@ from collections import Counter
 from dataclasses import dataclass, field
 from typing import Any, Iterable
 
-# Emoji-only program surface: each line is a pipeline stage.
 EMOJI_PROGRAM = "📥➡️👁️➡️🧠➡️🧩➡️🎯➡️⚙️➡️📤 ♻️🔁🧠🔍🛑"
+STATE_SCHEMA_VERSION = 1
+
 
 def stable_key(value: Any) -> str:
-    """Canonical JSON key for action/state comparison."""
+    """Canonical JSON key for state/action comparison."""
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
 
 def grid_summary(observation: Any) -> dict[str, Any]:
     """Extract conservative, task-agnostic features from common grid observations."""
@@ -40,17 +41,61 @@ def grid_summary(observation: Any) -> dict[str, Any]:
         "value_counts": sorted(counts.values(), reverse=True),
     }
 
+
 def state_key(observation: Any) -> str:
-    """Use the full observation for loop detection; summary is only for diagnostics."""
+    """Use the full observation for loop detection; summary is only diagnostic."""
     return stable_key(observation)
+
 
 @dataclass
 class Arc3EmojiSolver:
-    """Small, deterministic action selector that never invents an illegal action."""
+    """Deterministic action selector that only returns actions from the legal list."""
     max_repeated_state: int = 3
     seen_states: Counter[str] = field(default_factory=Counter)
     attempted_by_state: dict[str, set[str]] = field(default_factory=dict)
     turns: int = 0
+
+    def to_state(self) -> dict[str, Any]:
+        """Return JSON-serializable policy state for the next CLI invocation."""
+        return {
+            "schema_version": STATE_SCHEMA_VERSION,
+            "turns": self.turns,
+            "seen_states": dict(self.seen_states),
+            "attempted_by_state": {
+                key: sorted(actions) for key, actions in self.attempted_by_state.items()
+            },
+        }
+
+    @classmethod
+    def from_state(cls, state: Any, max_repeated_state: int = 3) -> "Arc3EmojiSolver":
+        """Restore a saved state, rejecting incompatible or malformed snapshots."""
+        solver = cls(max_repeated_state=max_repeated_state)
+        if not isinstance(state, dict) or state.get("schema_version") != STATE_SCHEMA_VERSION:
+            return solver
+        turns = state.get("turns", 0)
+        if isinstance(turns, int) and not isinstance(turns, bool) and turns >= 0:
+            solver.turns = turns
+        seen = state.get("seen_states", {})
+        if isinstance(seen, dict):
+            for key, count in seen.items():
+                if isinstance(key, str) and isinstance(count, int) and not isinstance(count, bool) and count > 0:
+                    solver.seen_states[key] = count
+        attempted = state.get("attempted_by_state", {})
+        if isinstance(attempted, dict):
+            for key, actions in attempted.items():
+                if isinstance(key, str) and isinstance(actions, list) and all(isinstance(a, str) for a in actions):
+                    solver.attempted_by_state[key] = set(actions)
+        return solver
+
+    def restore_history(self, history: Iterable[dict[str, Any]]) -> None:
+        """Reconstruct state from records containing both observation and action."""
+        for record in history:
+            if not isinstance(record, dict) or "observation" not in record or "action" not in record:
+                continue
+            key = state_key(record["observation"])
+            self.seen_states[key] += 1
+            self.attempted_by_state.setdefault(key, set()).add(stable_key(record["action"]))
+            self.turns += 1
 
     def choose_action(
         self,
@@ -64,7 +109,11 @@ class Arc3EmojiSolver:
                 "action": None,
                 "status": "no_legal_actions",
                 "program": EMOJI_PROGRAM,
-                "diagnostics": {"turn": self.turns, "state": grid_summary(observation)},
+                "diagnostics": {
+                    "turn": self.turns,
+                    "state": grid_summary(observation),
+                    "history_length": len(list(history)),
+                },
             }
 
         key = state_key(observation)
@@ -72,7 +121,6 @@ class Arc3EmojiSolver:
         attempted = self.attempted_by_state.setdefault(key, set())
         historical = list(history)
 
-        # If the environment exposes scores, honor them, but only among legal actions.
         scored = []
         for index, action in enumerate(actions):
             score = None
@@ -92,7 +140,6 @@ class Arc3EmojiSolver:
         else:
             chosen = next((a for a in actions if stable_key(a) not in attempted), None)
             if chosen is None:
-                # Deterministic fallback: cycle through the legal action list.
                 chosen = actions[self.turns % len(actions)]
             rationale = "first untried legal action for this state; deterministic fallback on exhaustion"
 
@@ -114,6 +161,7 @@ class Arc3EmojiSolver:
             },
         }
 
+
 def main() -> int:
     """Read one JSON request from stdin and emit one JSON response."""
     try:
@@ -131,11 +179,20 @@ def main() -> int:
     if not isinstance(actions, list):
         print(json.dumps({"error": "legal_actions must be a JSON array"}), file=sys.stdout)
         return 2
-    solver = Arc3EmojiSolver()
-    print(json.dumps(solver.choose_action(
-        request["observation"], actions, request.get("history", [])
-    ), ensure_ascii=False))
+    history = request.get("history", [])
+    if not isinstance(history, list):
+        print(json.dumps({"error": "history must be a JSON array"}), file=sys.stdout)
+        return 2
+
+    saved_state = request.get("solver_state")
+    solver = Arc3EmojiSolver.from_state(saved_state)
+    if saved_state is None:
+        solver.restore_history(history)
+    result = solver.choose_action(request["observation"], actions, history)
+    result["solver_state"] = solver.to_state()
+    print(json.dumps(result, ensure_ascii=False))
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
