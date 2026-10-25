@@ -1,0 +1,34 @@
+name: ARC-AGI-3 Emoji Solver
+
+on:
+  push:
+    paths:
+      - "arc3/**"
+      - "tests/test_arc3_emoji_solver.py"
+      - ".github/workflows/arc3-emoji-solver.yml"
+  pull_request:
+    paths:
+      - "arc3/**"
+      - "tests/test_arc3_emoji_solver.py"
+      - ".github/workflows/arc3-emoji-solver.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile
+        run: python -m py_compile arc3/emoji_solver.py
+      - name: Unit tests
+        run: python -m unittest discover -s tests -p 'test_arc3_emoji_solver.py' -v
+      - name: CLI smoke test
+        run: |
+          printf '%s\n' '{"observation":{"grid":[[0,1]]},"legal_actions":[{"button":"left"}]}' |
+            python arc3/emoji_solver.py
