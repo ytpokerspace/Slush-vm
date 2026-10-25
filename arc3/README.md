@@ -1,14 +1,14 @@
 # ARC-AGI-3 Emoji Solver Adapter
 
-This module adds an initial, dependency-free action-policy seam for integrating the
-SHUSH emoji pipeline with an ARC-AGI-3 environment.
+This module adds a dependency-free baseline policy and an optional runner for the
+official ARC-AGI-3 Python toolkit.
 
-## Status: baseline adapter, not a solved benchmark agent
+## Status: executable baseline, not a solved benchmark agent
 
-The adapter is executable and tested as a deterministic policy component. It does
-**not** include the official ARC-AGI-3 environment SDK, game-specific perception,
-a learned policy, or a claim of ARC-AGI-3 benchmark performance. An environment
-adapter must supply observations and the legal actions exposed by that environment.
+The policy is deterministic and tested. It only chooses among actions supplied as
+legal by the caller, tracks attempted actions per exact observation, and can persist
+its state across process restarts. It does **not** infer game rules, learn a world
+model, or establish ARC-AGI-3 benchmark performance.
 
 ## Emoji program surface
 
@@ -18,10 +18,10 @@ adapter must supply observations and the legal actions exposed by that environme
 
 The glyph sequence is the human-facing program surface. Its executable mapping is
 implemented in Python: ingest observation, inspect legal actions, choose a legal
-action deterministically, and emit diagnostics. Emojis are not themselves machine
-opcodes until a parser/runtime maps them to operations.
+action deterministically, and emit diagnostics. Emojis are not machine opcodes until
+a parser/runtime maps them to operations.
 
-## Request/response protocol
+## Policy protocol
 
 Request JSON:
 
@@ -33,13 +33,19 @@ Request JSON:
 }
 ```
 
-Response JSON includes `action`, `status`, the emoji `program`, and diagnostic
-metadata. If an action object has numeric `score` or `priority`, the adapter
-ranks those supplied values, while still selecting only from the legal action list.
-Without scores, it tries each legal action once per exact observation before using a
-deterministic fallback. Repeated observations are flagged as a possible loop.
+The response contains `action`, `status`, the emoji `program`, diagnostics, and a
+JSON-serializable `solver_state`. Send that `solver_state` back with the next request
+to preserve action attempts and repeated-state counters across CLI process restarts.
+Alternatively, supply history records containing both `observation` and `action`;
+records without both fields are ignored for state reconstruction.
 
-## Run
+If action objects include numeric `score` or `priority`, the policy ranks those
+values while still selecting only from the legal list. Without scores, it tries each
+legal action once for a given observation before a deterministic fallback. Repeated
+observations are flagged as a possible loop. This policy is a baseline explorer, not
+a game-specific strategy.
+
+## Run the policy
 
 From the repository root:
 
@@ -50,16 +56,33 @@ JSON
 python3 -m unittest discover -s tests -p 'test_arc3_emoji_solver.py' -v
 ```
 
-## Integration boundary
+## Optional official ARC-AGI-3 SDK runner
 
-A real ARC-AGI-3 runner should:
-1. Call the official environment to obtain the current observation and legal actions.
-2. Normalize that data into the request protocol above.
-3. Call the policy and pass its returned `action` back to the environment.
-4. Persist policy state/history across turns (or instantiate a long-lived solver).
-5. Stop on environment terminal status, action budget, or repeated-state limits.
-6. Report task-level success only from the environment's own success signal.
+Install the official toolkit separately:
 
-Do not pass arbitrary model-generated actions directly to an environment. Validate
-against the environment's legal action set first. Keep credentials and network access
-outside this module.
+```sh
+python -m pip install arc-agi
+python -m arc3.arc_agi_runner --game-id ls20 --max-actions 100 --render-mode terminal
+```
+
+The toolkit documents the `arc_agi.Arcade` / `arcengine` interface and may use an
+anonymous API key if `ARC_API_KEY` is not configured. Access to particular games can
+vary. To save a run recording, add `--save-recording`.
+
+**Important:** this runner is an integration smoke test, not a competitive agent.
+The current policy does not understand game-specific mechanics. For complex click
+actions it uses the fixed coordinate `(32, 32)` by default; set `--click-x` and
+`--click-y` to change it. It reports a win only when the SDK environment reports
+`GameState.WIN`. A nonzero exit status means the run did not report a win or could
+not complete.
+
+## Integration boundary and next research steps
+
+A stronger agent needs a perception/modeling layer, goal hypotheses, action-effect
+tracking, planning, and evaluation across held-out games/seeds. Keep a baseline
+comparison, action budget, run recordings, and scorecard evidence. Do not claim
+benchmark success based on unit tests or a single smoke run.
+
+Never pass arbitrary model-generated actions to the environment: validate every
+action against the environment's legal action set first. Keep credentials out of
+source control.
