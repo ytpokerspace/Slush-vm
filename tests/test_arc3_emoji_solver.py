@@ -255,5 +255,21 @@ class Arc3EmojiSolverTests(unittest.TestCase):
         self.assertEqual(result["grid"], [[0, 1]])
 
 
+    def test_unscored_legal_actions_are_not_starved_by_scored_actions(self):
+        solver = Arc3EmojiSolver()
+        observation = {"room": "mixed"}
+        actions = [{"id": "scored", "score": 10}, {"id": "unscored"}]
+        self.assertEqual(solver.choose_action(observation, actions)["action"]["id"], "scored")
+        self.assertEqual(solver.choose_action(observation, actions)["action"]["id"], "unscored")
+
+    def test_non_finite_scores_are_ignored(self):
+        actions = [
+            {"id": "nan", "score": float("nan")},
+            {"id": "infinite", "score": float("inf")},
+            {"id": "finite", "score": 0.5},
+        ]
+        self.assertEqual(Arc3EmojiSolver().choose_action({}, actions)["action"]["id"], "finite")
+
+
 if __name__ == "__main__":
     unittest.main()
