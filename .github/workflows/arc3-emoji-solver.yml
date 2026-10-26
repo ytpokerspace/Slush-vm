@@ -7,6 +7,7 @@ on:
       - "tests/test_arc3_emoji_solver.py"
       - "tests/test_arc3_search_dsl.py"
       - "tests/test_arc3_memory_partition.py"
+      - "tests/test_arc3_frame_prediction.py"
       - ".github/workflows/arc3-emoji-solver.yml"
   pull_request:
     paths:
@@ -27,7 +28,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Compile solver and optional SDK runner
-        run: python -m py_compile arc3/emoji_solver.py arc3/arc_agi_runner.py arc3/benchmark.py arc3/visual_policy.py arc3/search_dsl.py arc3/memory_partition.py
+        run: python -m py_compile arc3/emoji_solver.py arc3/arc_agi_runner.py arc3/benchmark.py arc3/visual_policy.py arc3/search_dsl.py arc3/memory_partition.py arc3/frame_prediction.py
       - name: Unit tests
         run: python -m unittest discover -s tests -p 'test_arc3_*.py' -v
       - name: CLI smoke test
