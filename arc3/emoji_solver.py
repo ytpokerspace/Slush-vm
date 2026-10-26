@@ -138,18 +138,19 @@ class Arc3EmojiSolver:
 
         # Rank scored actions first, then unscored legal actions, preserving input order
         # for ties. Never let one repeatedly-scored action starve other legal actions.
+        start_index = self.turns % len(actions)
         candidates = sorted(
             scored,
             key=lambda item: (
                 item[0] is None,
                 -(item[0] if item[0] is not None else 0.0),
-                item[1],
+                (item[1] - start_index) % len(actions),
             ),
         )
         chosen = next((a for _, _, a in candidates if stable_key(a) not in attempted), None)
         if chosen is None:
             chosen = candidates[0][2]
-        rationale = "highest provided score among untried legal actions; deterministic fallback on exhaustion"
+        rationale = "highest provided score among untried legal actions; global round-robin tie-break prevents first-action starvation"
 
         attempted.add(stable_key(chosen))
         self.turns += 1
