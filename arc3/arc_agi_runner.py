@@ -67,9 +67,10 @@ def candidate_click_points(
 ) -> list[dict[str, int]]:
     """Generate bounded deterministic click candidates from a serialized frame.
 
-    FrameDataRaw.frame is a stack of 2D layers. For foreground mode, sample cells
-    with nonzero values. Scan mode samples an 8x8 coordinate lattice. Center mode
-    yields only the configured center. These are exploration candidates, not
+    FrameDataRaw.frame is a stack of 2D layers. Foreground mode prefers changed
+    nonzero cells compared with the prior frame, then falls back to all foreground
+    cells so stationary relevant objects remain available. Scan and center modes
+    remain explicit exploration strategies; this is motion salience, not full
     semantic object detection.
     """
     if strategy == "center":
@@ -133,6 +134,7 @@ def candidate_click_points(
 
     # Evenly sample the discovered positions so large foreground areas don't
     # exhaust the action budget on adjacent cells.
+    if len(points) > max_points:
         if max_points == 1:
             points = [points[len(points) // 2]]
         else:
