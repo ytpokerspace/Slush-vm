@@ -16,7 +16,7 @@ on:
       max_actions:
         description: "Maximum actions per episode"
         required: true
-        default: "32"
+        default: "40"
         type: string
       seeds:
         description: "Comma-separated seeds"
@@ -40,7 +40,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install "git+https://github.com/arcprize/ARC-AGI.git"
-      - name: Run bounded multi-seed live benchmark
+      - name: Run bounded multi-seed live benchmark with visual target navigation
         env:
           GAME_ID: ${{ inputs.game_id || 'ls20' }}
           MAX_ACTIONS: ${{ inputs.max_actions || '32' }}
