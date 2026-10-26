@@ -7,7 +7,7 @@ estimated from observations unless gravity_px_s2 is supplied explicitly.
 """
 from __future__ import annotations
 
-from math import isfinite
+from math import isfinite, sqrt
 from typing import Any, Iterable
 
 
@@ -52,29 +52,63 @@ def _acceleration(rows: list[dict[str, float]], key: str) -> float:
     return (last_v - first_v) / elapsed if elapsed > 0 else 0.0
 
 
+def _ground_hit_time(y: float, vy: float, ay: float, ground_y: float, dt: float) -> float | None:
+    """Return the first downward ground-crossing time within dt, if any."""
+    if y >= ground_y and vy >= 0:
+        return 0.0
+    c = y - ground_y
+    if abs(ay) < 1e-12:
+        roots = [] if abs(vy) < 1e-12 else [-c / vy]
+    else:
+        discriminant = vy * vy - 2.0 * ay * c
+        if discriminant < 0:
+            return None
+        root = sqrt(discriminant)
+        roots = [(-vy - root) / ay, (-vy + root) / ay]
+    valid = [r for r in roots if 1e-9 < r <= dt + 1e-9 and vy + ay * r > 0]
+    return min(valid) if valid else None
+
+
 def _simulate(
     x: float, y: float, vx: float, vy: float, ax: float, ay: float,
     horizon_seconds: float, step_seconds: float, ground_y: float | None = None,
     restitution: float = 0.65,
 ) -> list[dict[str, float | bool]]:
-    states = []
-    t = step_seconds
-    current_vy = vy
-    bounced = False
-    while t <= horizon_seconds + 1e-9:
-        px = x + vx * t + 0.5 * ax * t * t
-        py = y + current_vy * t + 0.5 * ay * t * t
-        collision = ground_y is not None and py >= ground_y and current_vy + ay * t > 0
-        if collision:
-            py = ground_y
-            current_vy = -(current_vy + ay * t) * restitution
-            # Continue the post-impact segment from the collision time; this
-            # simple model allows one bounce and is intentionally not a rigid-body solver.
-            remaining = max(0.0, t - (ground_y - y) / max(1e-9, current_vy if current_vy > 0 else 1e-9))
-            py = ground_y + current_vy * remaining + 0.5 * ay * remaining * remaining
-            bounced = True
-        states.append({"t": round(t, 6), "x": px, "y": py, "bounce_contact": bool(collision)})
-        t += step_seconds
+    """Integrate forward from the last observation, rebasing state at ground contact."""
+    states: list[dict[str, float | bool]] = []
+    elapsed = 0.0
+    while elapsed < horizon_seconds - 1e-9:
+        dt = min(step_seconds, horizon_seconds - elapsed)
+        contact = False
+        hit = _ground_hit_time(y, vy, ay, ground_y, dt) if ground_y is not None else None
+
+        if hit is not None:
+            # Advance to impact, apply restitution to the impact velocity, then
+            # integrate the remaining fraction of this step from the impact point.
+            x += vx * hit + 0.5 * ax * hit * hit
+            vx += ax * hit
+            impact_vy = vy + ay * hit
+            y = ground_y  # type: ignore[assignment]
+            vy = -impact_vy * restitution
+            remaining = max(0.0, dt - hit)
+            x += vx * remaining + 0.5 * ax * remaining * remaining
+            y += vy * remaining + 0.5 * ay * remaining * remaining
+            vx += ax * remaining
+            vy += ay * remaining
+            contact = True
+        else:
+            x += vx * dt + 0.5 * ax * dt * dt
+            y += vy * dt + 0.5 * ay * dt * dt
+            vx += ax * dt
+            vy += ay * dt
+
+        elapsed += dt
+        states.append({
+            "t": round(elapsed, 6),
+            "x": x,
+            "y": y,
+            "bounce_contact": contact,
+        })
     return states
 
 
@@ -100,8 +134,8 @@ def forecast_trajectory(
         raise ValueError("gravity_px_s2 must be finite when supplied")
     if ground_y is not None and not isfinite(ground_y):
         raise ValueError("ground_y must be finite when supplied")
-    if not 0 <= restitution <= 1:
-        raise ValueError("restitution must be in [0, 1]")
+    if not isfinite(restitution) or not 0 <= restitution <= 1:
+        raise ValueError("restitution must be finite and in [0, 1]")
 
     x, y = rows[-1]["x"], rows[-1]["y"]
     vx, vy = _velocity(rows, "x"), _velocity(rows, "y")
