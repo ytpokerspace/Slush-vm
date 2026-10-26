@@ -47,7 +47,7 @@ class TemporalVideoTests(unittest.TestCase):
 
     def test_missing_prior_frame_rejected(self):
         with self.assertRaises(ValueError):
-            evaluate_midpoint([self.frames[0], self.frames[1]], [2.5, 5.0])
+            evaluate_midpoint([self.frames[0], self.frames[1]], [0.0, 10.0])
 
 
 if __name__ == "__main__":
