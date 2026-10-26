@@ -429,5 +429,26 @@ class Arc3EmojiSolverTests(unittest.TestCase):
         self.assertEqual(navigation["walkable_color"], 3)
 
 
+    def test_visual_policy_keeps_corridor_direction_near_hollow_target(self):
+        grid = self.make_visual_navigation_grid()
+        for y in range(10, 52):
+            for x in list(range(30, 34)) + list(range(39, 43)):
+                grid[y][x] = 4
+        # Move the sprite to the narrow passage just below the hollow target.
+        for y in range(45, 50):
+            for x in range(34, 39):
+                grid[y][x] = 3
+        for y in range(15, 17):
+            for x in range(34, 39):
+                grid[y][x] = 12
+        for y in range(17, 20):
+            for x in range(34, 39):
+                grid[y][x] = 9
+        navigation = infer_navigation({"frame": [grid]})
+        self.assertIsNotNone(navigation)
+        self.assertEqual(navigation["action"], "ACTION1")
+        self.assertEqual(navigation["walkable_color"], 3)
+
+
 if __name__ == "__main__":
     unittest.main()
