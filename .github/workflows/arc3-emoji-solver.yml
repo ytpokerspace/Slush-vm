@@ -4,15 +4,12 @@ on:
   push:
     paths:
       - "arc3/**"
-      - "tests/test_arc3_emoji_solver.py"
-      - "tests/test_arc3_search_dsl.py"
-      - "tests/test_arc3_memory_partition.py"
-      - "tests/test_arc3_frame_prediction.py"
+      - "tests/test_arc3_*.py"
       - ".github/workflows/arc3-emoji-solver.yml"
   pull_request:
     paths:
       - "arc3/**"
-      - "tests/test_arc3_emoji_solver.py"
+      - "tests/test_arc3_*.py"
       - ".github/workflows/arc3-emoji-solver.yml"
   workflow_dispatch:
 
