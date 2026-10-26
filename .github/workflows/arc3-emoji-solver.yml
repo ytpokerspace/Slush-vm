@@ -25,7 +25,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Compile solver and optional SDK runner
-        run: python -m py_compile arc3/emoji_solver.py arc3/arc_agi_runner.py arc3/benchmark.py
+        run: python -m py_compile arc3/emoji_solver.py arc3/arc_agi_runner.py arc3/benchmark.py arc3/visual_policy.py
       - name: Unit tests
         run: python -m unittest discover -s tests -p 'test_arc3_emoji_solver.py' -v
       - name: CLI smoke test
