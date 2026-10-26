@@ -30,7 +30,7 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_arc3_*.py' -v
       - name: CLI smoke test
         run: |
-          printf '%s\\n' '{"observation":{"grid":[[0,1]]},"legal_actions":[{"button":"left"}]}' |
+          printf '%s\n' '{"observation":{"grid":[[0,1]]},"legal_actions":[{"button":"left"}]}' |
             python arc3/emoji_solver.py
       - name: Verify SDK runner reports missing optional dependency cleanly
         run: |
