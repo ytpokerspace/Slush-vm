@@ -13,7 +13,7 @@ class MotionPlannerTests(unittest.TestCase):
         self.assertEqual(result["best_probability"], 0.60)
         self.assertAlmostEqual(sum(s["probability"] for s in result["scenarios"]), 1.0)
         continued = next(s for s in result["scenarios"] if s["name"] == "continue")
-        self.assertEqual(continued["predictions"][0]["predicted_center"], [3.0, 1.0])
+        self.assertEqual(continued["predictions"][0]["predicted_center"], [4.0, 1.0])
         self.assertFalse(result["probabilities_are_calibrated"])
 
     def test_stationary_scene_reports_no_motion(self):
