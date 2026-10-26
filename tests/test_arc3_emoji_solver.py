@@ -6,6 +6,7 @@ from enum import Enum
 from types import SimpleNamespace
 
 from arc3.arc_agi_runner import (candidate_click_points, frame_observation, make_action_records, to_jsonable)
+from arc3.benchmark import extract_result, summarize_results
 from arc3.emoji_solver import Arc3EmojiSolver, EMOJI_PROGRAM, grid_summary, stable_key, state_key
 
 
@@ -330,6 +331,33 @@ class Arc3EmojiSolverTests(unittest.TestCase):
     def test_unknown_click_strategy_is_rejected(self):
         with self.assertRaises(ValueError):
             candidate_click_points({}, "unknown")
+
+
+    def test_benchmark_extracts_final_runner_json(self):
+        output = 'SDK log line\\n{"game_id":"ls20","steps":8,"won":false}\\n'
+        self.assertEqual(extract_result(output)["game_id"], "ls20")
+
+    def test_benchmark_ignores_unrelated_json(self):
+        self.assertIsNone(extract_result('{"message":"hello"}\\nnot json'))
+
+    def test_benchmark_summary_calculates_win_and_level_rates(self):
+        summary = summarize_results([
+            {"game_id": "ls20", "steps": 8, "won": False, "levels_completed": 0, "win_levels": 7},
+            {"game_id": "ls20", "steps": 12, "won": True, "levels_completed": 2, "win_levels": 4},
+        ])
+        self.assertEqual(summary["runs_executed"], 2)
+        self.assertEqual(summary["wins"], 1)
+        self.assertEqual(summary["total_actions"], 20)
+        self.assertEqual(summary["total_levels_completed"], 2)
+        self.assertEqual(summary["total_levels_available_reported"], 11)
+        self.assertAlmostEqual(summary["win_rate"], 0.5)
+        self.assertAlmostEqual(summary["level_completion_fraction"], 2 / 11)
+
+    def test_benchmark_summary_handles_all_failed_runs(self):
+        summary = summarize_results([{"game_id": "ls20", "error": "offline"}])
+        self.assertEqual(summary["runs_failed"], 1)
+        self.assertEqual(summary["runs_executed"], 0)
+        self.assertEqual(summary["win_rate"], 0.0)
 
 
 if __name__ == "__main__":
