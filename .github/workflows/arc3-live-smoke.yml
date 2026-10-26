@@ -16,7 +16,7 @@ on:
       max_actions:
         description: "Maximum actions per episode"
         required: true
-        default: "48"
+        default: "56"
         type: string
       seeds:
         description: "Comma-separated seeds"
@@ -43,7 +43,7 @@ jobs:
       - name: Run bounded multi-seed live benchmark with visual target navigation
         env:
           GAME_ID: ${{ inputs.game_id || 'ls20' }}
-          MAX_ACTIONS: ${{ inputs.max_actions || '48' }}
+          MAX_ACTIONS: ${{ inputs.max_actions || '56' }}
           SEEDS: ${{ inputs.seeds || '0,1,2' }}
         run: |
           set +e
