@@ -48,10 +48,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-      - name: Install optional ARC-AGI-3 SDK
-        continue-on-error: true
-        run: python -m pip install --upgrade pip arc-agi
+          python-version: "3.12"
+      - name: Install ARC-AGI-3 SDK and engine
+        run: python -m pip install --upgrade pip arc-agi arcengine
       - name: Run bounded live episode and preserve report
         run: |
           set +e
