@@ -13,6 +13,7 @@ from typing import Any
 from arc3.emoji_solver import Arc3EmojiSolver
 from arc3.level_planner import LevelPlanningMemory
 from arc3.motion_planner import forecast_motion
+from arc3.object_perception import perceive_objects
 from arc3.visual_policy import infer_navigation, score_navigation_candidates
 
 
@@ -215,6 +216,7 @@ def main() -> int:
     last_navigation = None
     previous_observation = None
     last_motion_forecast = None
+    last_object_perception = None
     terminal = "action_limit"
     while steps < args.max_actions:
         legal = list(env.action_space or [])
@@ -224,6 +226,8 @@ def main() -> int:
             args.max_click_points, previous_observation,
         )
         navigation = infer_navigation(observation)
+        last_object_perception = perceive_objects(observation)
+        planning_memory.partitions["object_perception"] = last_object_perception
         last_motion_forecast = forecast_motion(previous_observation, observation) if previous_observation is not None else {
             "status": "insufficient_observations", "scenarios": [], "best_scenario": None
         }
@@ -295,6 +299,7 @@ def main() -> int:
         "last_navigation": last_navigation,
         "planning_memory": planning_memory.snapshot(),
         "motion_forecast": last_motion_forecast,
+        "object_perception": last_object_perception,
         "click_strategy": args.click_strategy,
         "scorecard": scorecard,
         "last_state": frame_observation(frame).get("__arc3_state"),
