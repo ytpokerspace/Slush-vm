@@ -16,7 +16,7 @@ on:
       max_actions:
         description: "Maximum actions per episode"
         required: true
-        default: "40"
+        default: "48"
         type: string
       seeds:
         description: "Comma-separated seeds"
