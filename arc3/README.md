@@ -39,14 +39,14 @@ Alternatively, supply history records containing both `observation` and `action`
 
 ## Run against the official ARC-AGI-3 toolkit
 
-Install the official toolkit separately:
+Install the official toolkit separately (the GitHub source currently documents Python 3.12+):
 
 ```sh
-python -m pip install arc-agi
+python -m pip install "git+https://github.com/arcprize/ARC-AGI.git"
 python -m arc3.arc_agi_runner --game-id ls20 --max-actions 20 --save-recording
 ```
 
-The runner uses the documented `arc_agi.Arcade`, `env.action_space`,
+The GitHub source is used because the published PyPI package installed in the first integration attempt did not provide the documented `arcengine` import. The runner uses the documented `arc_agi.Arcade`, `env.action_space`,
 `env.observation_space`, `env.step()`, and `GameState` interface. An API key is
 optional for basic access; a registered key can enable access to additional games.
 Keep credentials out of source control.
