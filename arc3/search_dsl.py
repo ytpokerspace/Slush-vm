@@ -260,8 +260,8 @@ def search(
         winner = max(root.children, key=lambda child: (child.visits, child.value))
         best_action = winner.action
         best_score = winner.value if winner.visits else evaluate(winner.state)
-    visits_by_action = {child.action: child.visits for child in root.children or []}
-    summary = tuple((action, float(score), visits_by_action.get(action, 0))
+    root_children = root.children or []
+    summary = tuple((action, float(score), next((child.visits for child in root_children if child.action == action), 0))
                     for score, action in first_candidates[:cfg.top_k])
     plan = ranked[0][2] if ranked and ranked[0][2] and ranked[0][2][0] == best_action else (best_action,)
     return SearchResult(best_action, best_score, plan, created, pruned,
