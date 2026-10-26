@@ -255,9 +255,6 @@ def main() -> int:
         if next_frame is None:
             terminal = "environment_returned_no_observation"
             break
-        previous_observation = observation
-        next_observation = frame_observation(next_frame)
-        planning_memory.record_action(selected_record, observation, next_observation)
         next_observation = frame_observation(next_frame)
         planning_memory.record_action(selected_record, observation, next_observation)
         previous_observation = observation
