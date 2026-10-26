@@ -46,3 +46,10 @@ The validator uses only the Python standard library. It checks required fields a
 The ARC solver branch includes `arc3/object_value_planner.py`, a small heuristic scaffold for separating per-object decision estimates from global objective arbitration. It scores goal value, estimated success probability, information value, risk, and action cost; it can recommend pursuing, preparing for, or deferring an objective. Deferred objectives remain in the result so they can be reconsidered after new observations.
 
 This module is a decision primitive, not yet an integrated semantic object detector or a proven improvement to game performance. Its numeric inputs and utility weights are heuristics unless supplied from measured evidence. It does not generate or store private chain-of-thought; it stores compact decision factors and outcomes. Unit tests cover deferral, preparation, arbitration, and input validation.
+
+
+## ARC object-centric perception (experimental)
+
+The ARC solver branch includes `arc3/object_perception.py`. It extracts connected components and reports geometry: area, bounding-box width/height, aspect ratio, fill density, color counts, center, relative size/dimension ranks, and tentative geometric role hypotheses. The runner stores the resulting object summary in the partitioned planning memory and includes it in its JSON output.
+
+These descriptors support "what it looks like" and "how it compares" but do not prove what an object means in game terms. The default background estimate uses the most frequent pixel value and can fail on multi-color backgrounds; explicit background colors are supported. Diagonal adjacency, occlusion, animation, and role identification remain open problems. Object identity confidence remains zero until evidence beyond geometry is added.
