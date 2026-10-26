@@ -168,6 +168,19 @@ def infer_navigation(observation: Any) -> dict[str, Any] | None:
             for x, y in target["cells"]
         )
 
+    half_width = max(0, (x1 - x0) // 2)
+    half_height = max(0, (y1 - y0) // 2)
+
+    def footprint_is_passable(center: tuple[int, int]) -> bool:
+        cx, cy = center
+        for fy in range(cy - half_height, cy + half_height + 1):
+            for fx in range(cx - half_width, cx + half_width + 1):
+                if not (0 <= fy < min(len(grid), 55) and 0 <= fx < len(grid[fy])):
+                    return False
+                if grid[fy][fx] not in passable:
+                    return False
+        return True
+
     queue = deque([start])
     previous: dict[tuple[int, int], tuple[int, int] | None] = {start: None}
     goal_node: tuple[int, int] | None = None
@@ -181,7 +194,9 @@ def infer_navigation(observation: Any) -> dict[str, Any] | None:
             nx, ny = nxt
             if nxt in previous or not (0 <= ny < min(len(grid), 55) and 0 <= nx < len(grid[ny])):
                 continue
-            if grid[ny][nx] not in passable and not reaches_target(nxt):
+            # Check the whole sprite footprint, not just its center pixel, so
+            # apparent paths through one-cell walls are rejected.
+            if not footprint_is_passable(nxt):
                 continue
             previous[nxt] = current
             queue.append(nxt)
