@@ -47,7 +47,10 @@ python -m arc3.arc_agi_runner --game-id ls20 --max-actions 20 --save-recording
 ```
 
 The GitHub source is used because the published PyPI package installed in the first integration attempt did not provide the documented `arcengine` import. The runner uses the documented `arc_agi.Arcade`, `env.action_space`,
-`env.observation_space`, `env.step()`, and `GameState` interface. An API key is
+`env.observation_space`, `env.step()`, and `GameState` interface. It now includes an
+observation-only visual navigation heuristic: it looks for a large moving-object
+candidate, a smaller shared-color target, and a traversable-color path. When that
+pattern cannot be inferred, it falls back to deterministic action exploration. An API key is
 optional for basic access; a registered key can enable access to additional games.
 Keep credentials out of source control.
 
@@ -73,8 +76,10 @@ failure; a completed run can succeed even if the baseline did not win.
 
 ## Integration boundary and next research steps
 
-A stronger agent needs frame perception, object/goal hypotheses, action-effect
-tracking, planning, and evaluation across held-out games and seeds. Record action
+The visual heuristic is an early hypothesis-driven baseline, not a general solution:
+it can misidentify objects and only handles simple grid-aligned paths. A stronger
+agent needs robust frame perception, action-effect tracking, goal hypotheses,
+planning, and evaluation across held-out games and seeds. Record action
 budgets, outcomes, levels completed, scorecards, and recordings. Do not claim
 benchmark success based on unit tests or a single smoke run.
 
