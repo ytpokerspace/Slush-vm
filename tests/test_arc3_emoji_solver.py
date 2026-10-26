@@ -381,9 +381,8 @@ class Arc3EmojiSolverTests(unittest.TestCase):
         for y in range(47, 50):
             for x in range(34, 39):
                 grid[y][x] = 9
-        for y in range(11, 14):
-            for x in range(35, 38):
-                grid[y][x] = 9
+        for x, y in ((35, 11), (36, 11), (37, 11), (37, 12), (37, 13), (35, 13)):
+            grid[y][x] = 9
         return grid
 
     def test_visual_policy_extracts_first_frame_layer(self):
