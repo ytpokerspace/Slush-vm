@@ -91,7 +91,12 @@ def _motion(frames: list[Grid]) -> Grid:
 
 
 def _change_aware(frames: list[Grid]) -> Grid:
-    """Use last observed per-cell change direction, when two transitions exist."""
+    """Use a short per-cell history when a coordinate has changed repeatedly.
+
+    If a cell changed in both of the last two transitions, predict its recent
+    modal value; otherwise preserve the latest value. This is a simple
+    change-frequency baseline, not a semantic object model.
+    """
     latest = _copy_grid(frames[-1])
     if len(frames) < 3:
         return latest
@@ -99,14 +104,20 @@ def _change_aware(frames: list[Grid]) -> Grid:
     output = _copy_grid(current)
     for y, row in enumerate(current):
         for x, value in enumerate(row):
-            if y >= len(previous) or x >= len(previous[y]) or y >= len(older) or x >= len(older[y]):
+            if (y >= len(previous) or x >= len(previous[y])
+                    or y >= len(older) or x >= len(older[y])):
                 continue
             before, prior = older[y][x], previous[y][x]
-            if prior != before and value == prior:
-                # Continue the latest observed cell transition one step.
-                output[y][x] = value
-    # For discrete grids, a transition has no universal direction; this method
-    # preserves current values and is a deliberately conservative control.
+            if before != prior and prior != value:
+                values = [f[y][x] for f in frames[-min(5, len(frames)):]
+                          if y < len(f) and x < len(f[y])]
+                counts = Counter(values)
+                # On ties, Counter preserves first-seen order; latest value is
+                # the safe fallback so the heuristic remains deterministic.
+                winner, count = counts.most_common(1)[0]
+                if sum(1 for n in counts.values() if n == count) > 1:
+                    winner = value
+                output[y][x] = winner
     return output
 
 
