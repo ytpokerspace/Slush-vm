@@ -63,6 +63,7 @@ def candidate_click_points(
     center_x: int = 32,
     center_y: int = 32,
     max_points: int = 32,
+    previous_observation: Any = None,
 ) -> list[dict[str, int]]:
     """Generate bounded deterministic click candidates from a serialized frame.
 
@@ -102,9 +103,36 @@ def candidate_click_points(
                     points.append((x, y))
     if not points:
         return [{"x": center_x, "y": center_y}]
+    # Prefer pixels that changed since the prior frame: these are likely to
+    # belong to moving or newly active objects. Keep a foreground fallback so
+    # stationary goals remain clickable when the scene has no visible motion.
+    previous_frame = (
+        previous_observation.get("frame")
+        if isinstance(previous_observation, dict) else None
+    )
+    if previous_frame is not None:
+        if previous_frame and isinstance(previous_frame[0], list) and previous_frame[0] and not isinstance(previous_frame[0][0], list):
+            previous_layers = [previous_frame]
+        else:
+            previous_layers = previous_frame if isinstance(previous_frame, list) else []
+        changed: list[tuple[int, int]] = []
+        for layer_index, layer in enumerate(layers):
+            if layer_index >= len(previous_layers) or not isinstance(layer, list):
+                continue
+            prior = previous_layers[layer_index]
+            if not isinstance(prior, list):
+                continue
+            for y, row in enumerate(layer[:64]):
+                if not isinstance(row, list) or y >= len(prior) or not isinstance(prior[y], list):
+                    continue
+                for x, cell in enumerate(row[:64]):
+                    if x < len(prior[y]) and cell != prior[y][x] and cell not in (0, "0", None):
+                        changed.append((x, y))
+        if changed:
+            points = list(dict.fromkeys(changed))
+
     # Evenly sample the discovered positions so large foreground areas don't
     # exhaust the action budget on adjacent cells.
-    if len(points) > max_points:
         if max_points == 1:
             points = [points[len(points) // 2]]
         else:
@@ -115,11 +143,13 @@ def candidate_click_points(
 
 def make_action_records(legal_actions: list[Any], observation: dict[str, Any],
                         click_strategy: str, center_x: int, center_y: int,
-                        max_click_points: int = 32) -> list[dict[str, Any]]:
+                        max_click_points: int = 32,
+                        previous_observation: Any = None) -> list[dict[str, Any]]:
     """Expand complex legal actions into legal action + coordinate candidates."""
     records: list[dict[str, Any]] = []
     points = candidate_click_points(
-        observation, click_strategy, center_x, center_y, max_click_points
+        observation, click_strategy, center_x, center_y, max_click_points,
+        previous_observation,
     )
     for action in legal_actions:
         name = getattr(action, "name", str(action))
@@ -178,13 +208,14 @@ def main() -> int:
     steps = 0
     navigation_steps = 0
     last_navigation = None
+    previous_observation = None
     terminal = "action_limit"
     while steps < args.max_actions:
         legal = list(env.action_space or [])
         observation = frame_observation(frame)
         action_records = make_action_records(
             legal, observation, args.click_strategy, args.click_x, args.click_y,
-            args.max_click_points,
+            args.max_click_points, previous_observation,
         )
         navigation = infer_navigation(observation)
         action_records = score_navigation_candidates(action_records, navigation)
@@ -219,8 +250,9 @@ def main() -> int:
         if next_frame is None:
             terminal = "environment_returned_no_observation"
             break
+        previous_observation = observation
         frame = next_frame
-        state = getattr(frame, "state", None)
+        state = getattr(frame, "state", None")
         state_name = getattr(state, "name", str(state)).upper() if state is not None else ""
         if state == GameState.WIN or state_name == "WIN":
             terminal = "win"
