@@ -47,7 +47,7 @@ jobs:
           SEEDS: ${{ inputs.seeds || '0,1,2' }}
         run: |
           set +e
-          timeout 300s python -m arc3.benchmark \
+          python -m arc3.benchmark \
             --games "$GAME_ID" \
             --seeds "$SEEDS" \
             --max-actions "$MAX_ACTIONS" \
