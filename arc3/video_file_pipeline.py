@@ -270,7 +270,8 @@ def main() -> int:
     parser.add_argument("--width", type=int, default=160)
     parser.add_argument("--height", type=int, default=90)
     parser.add_argument("--method", choices=("persistence", "optical_flow"), default="persistence")
-    parser.add_argument("--output", help="optional path for JSON results")\n    parser.add_argument("--export-dataset", help="export sampled frames and training manifest to this directory")
+    parser.add_argument("--output", help="optional path for JSON results")
+    parser.add_argument("--export-dataset", help="export sampled frames and training manifest to this directory")
     args = parser.parse_args()
     if args.export_dataset:
         exported = export_video_dataset(
