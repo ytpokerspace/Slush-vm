@@ -73,6 +73,7 @@ class SearchResult:
     nodes_pruned: int
     iterations: int
     reason: str
+    candidate_summary: tuple[tuple[Action, float, int], ...] = ()
 
 
 def compile_dsl(source: str) -> SearchConfig:
@@ -259,9 +260,12 @@ def search(
         winner = max(root.children, key=lambda child: (child.visits, child.value))
         best_action = winner.action
         best_score = winner.value if winner.visits else evaluate(winner.state)
-    plan = ranked[0][2] if ranked and ranked[0][2] else (best_action,)
+    visits_by_action = {child.action: child.visits for child in root.children or []}
+    summary = tuple((action, float(score), visits_by_action.get(action, 0))
+                    for score, action in first_candidates[:cfg.top_k])
+    plan = ranked[0][2] if ranked and ranked[0][2] and ranked[0][2][0] == best_action else (best_action,)
     return SearchResult(best_action, best_score, plan, created, pruned,
-                        iterations, "bounded_search_complete")
+                        iterations, "bounded_search_complete", summary)
 
 
 def main() -> int:
@@ -282,7 +286,7 @@ def main() -> int:
                     lambda s: 10.0 if s == goal else -abs(goal - s),
                     lambda s: s == goal, lambda s: s, config)
     print(json.dumps({"action": result.action, "score": result.score,
-                      "plan": list(result.plan), "nodes_created": result.nodes_created,
+                      "plan": list(result.plan), "top_candidates": [{"action": action, "heuristic_score": score, "mcts_visits": visits} for action, score, visits in result.candidate_summary], "nodes_created": result.nodes_created,
                       "nodes_pruned": result.nodes_pruned, "iterations": result.iterations,
                       "reason": result.reason}, sort_keys=True))
     return 0
