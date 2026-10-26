@@ -43,7 +43,7 @@ jobs:
       - name: Run bounded multi-seed live benchmark with visual target navigation
         env:
           GAME_ID: ${{ inputs.game_id || 'ls20' }}
-          MAX_ACTIONS: ${{ inputs.max_actions || '32' }}
+          MAX_ACTIONS: ${{ inputs.max_actions || '48' }}
           SEEDS: ${{ inputs.seeds || '0,1,2' }}
         run: |
           set +e
@@ -53,6 +53,7 @@ jobs:
             --max-actions "$MAX_ACTIONS" \
             --click-strategy foreground \
             --max-click-points 16 \
+            --run-timeout 180 \
             --save-recording \
             --output arc3-benchmark.json > arc3-benchmark-console.log 2>&1
           status=$?
