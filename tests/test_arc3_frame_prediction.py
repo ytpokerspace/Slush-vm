@@ -25,7 +25,8 @@ class FramePredictionTests(unittest.TestCase):
         history = [[[0]], [[1]], [[1]]]
         cell = predict_next_frame(history)["cells"][0][0]
         self.assertEqual(cell["predicted_value"], 1)
-        self.assertAlmostEqual(cell["confidence"], 2 / 3)
+        # The API intentionally rounds displayed confidence to four decimals.
+        self.assertAlmostEqual(cell["confidence"], 2 / 3, places=4)
         self.assertEqual(cell["top_candidates"][0]["value"], 1)
 
     def test_frame_scoring_counts_correct_cells(self):
