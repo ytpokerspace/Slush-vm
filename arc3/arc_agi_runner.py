@@ -254,7 +254,7 @@ def main() -> int:
             break
         previous_observation = observation
         frame = next_frame
-        state = getattr(frame, "state", None")
+        state = getattr(frame, "state", None)
         state_name = getattr(state, "name", str(state)).upper() if state is not None else ""
         if state == GameState.WIN or state_name == "WIN":
             terminal = "win"
