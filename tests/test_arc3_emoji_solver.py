@@ -5,7 +5,7 @@ import unittest
 from enum import Enum
 from types import SimpleNamespace
 
-from arc3.arc_agi_runner import frame_observation, to_jsonable
+from arc3.arc_agi_runner import (candidate_click_points, frame_observation, make_action_records, to_jsonable)
 from arc3.emoji_solver import Arc3EmojiSolver, EMOJI_PROGRAM, grid_summary, stable_key, state_key
 
 
@@ -269,6 +269,58 @@ class Arc3EmojiSolverTests(unittest.TestCase):
             {"id": "finite", "score": 0.5},
         ]
         self.assertEqual(Arc3EmojiSolver().choose_action({}, actions)["action"]["id"], "finite")
+
+
+    def test_foreground_clicks_find_nonzero_cells(self):
+        observation = {"frame": [[[0, 0, 3], [0, 2, 0]]]}
+        points = candidate_click_points(observation, "foreground", max_points=10)
+        self.assertEqual(points, [{"x": 2, "y": 0}, {"x": 1, "y": 1}])
+
+    def test_foreground_clicks_fall_back_to_center_for_empty_frame(self):
+        self.assertEqual(
+            candidate_click_points({"frame": [[[0, 0], [0, 0]]]}, "foreground", 7, 9),
+            [{"x": 7, "y": 9}],
+        )
+
+    def test_click_candidates_are_bounded(self):
+        grid = [[1 for _ in range(64)] for _ in range(64)]
+        points = candidate_click_points({"frame": [grid]}, "foreground", max_points=8)
+        self.assertEqual(len(points), 8)
+        self.assertTrue(all(0 <= p["x"] < 64 and 0 <= p["y"] < 64 for p in points))
+
+    def test_click_candidates_allow_single_point_limit(self):
+        grid = [[1, 1], [1, 1]]
+        points = candidate_click_points({"frame": [grid]}, "foreground", max_points=1)
+        self.assertEqual(len(points), 1)
+
+    def test_scan_click_strategy_returns_grid(self):
+        points = candidate_click_points({}, "scan", max_points=10)
+        self.assertEqual(len(points), 10)
+        self.assertEqual(points[0], {"x": 4, "y": 4})
+
+    def test_complex_actions_expand_to_coordinate_candidates(self):
+        class Action:
+            name = "ACTION6"
+            def is_complex(self):
+                return True
+        records = make_action_records(
+            [Action()], {"frame": [[[0, 1], [0, 0]]]}, "foreground", 32, 32
+        )
+        self.assertEqual(records, [{"name": "ACTION6", "data": {"x": 1, "y": 0}}])
+
+    def test_simple_actions_are_not_expanded(self):
+        class Action:
+            name = "ACTION1"
+            def is_complex(self):
+                return False
+        records = make_action_records(
+            [Action()], {"frame": [[[0, 1], [0, 0]]]}, "foreground", 32, 32
+        )
+        self.assertEqual(records, [{"name": "ACTION1"}])
+
+    def test_unknown_click_strategy_is_rejected(self):
+        with self.assertRaises(ValueError):
+            candidate_click_points({}, "unknown")
 
 
 if __name__ == "__main__":
