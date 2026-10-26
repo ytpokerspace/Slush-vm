@@ -450,5 +450,16 @@ class Arc3EmojiSolverTests(unittest.TestCase):
         self.assertEqual(navigation["walkable_color"], 3)
 
 
+    def test_visual_policy_rejects_path_through_wall_under_sprite_footprint(self):
+        grid = self.make_visual_navigation_grid()
+        for y in range(10, 52):
+            for x in list(range(30, 34)) + list(range(39, 43)):
+                grid[y][x] = 4
+        for x in range(34, 39):
+            grid[14][x] = 5
+        navigation = infer_navigation({"frame": [grid]})
+        self.assertIsNone(navigation)
+
+
 if __name__ == "__main__":
     unittest.main()
