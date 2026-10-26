@@ -126,7 +126,28 @@ def infer_navigation(observation: Any) -> dict[str, Any] | None:
                     boundary_values[value] += 1
     if not boundary_values:
         return None
-    walkable = boundary_values.most_common(1)[0][0]
+
+    # Prefer the observed corridor color on the direct ray toward the target.
+    # This avoids a wall/floor tie when the sprite is inside a narrow corridor.
+    ray_values: list[int] = []
+    if px == tx:
+        for y in range(min(py, ty) + 1, max(py, ty)):
+            value = grid[y][px]
+            if value in background and value not in player_colors and value not in target["colors"]:
+                ray_values.append(value)
+    elif py == ty:
+        for x in range(min(px, tx) + 1, max(px, tx)):
+            value = grid[py][x]
+            if value in background and value not in player_colors and value not in target["colors"]:
+                ray_values.append(value)
+    if ray_values:
+        walkable = Counter(ray_values).most_common(1)[0][0]
+    else:
+        max_boundary_count = max(boundary_values.values())
+        tied = [color for color, count in boundary_values.items() if count == max_boundary_count]
+        # When the local boundary is tied, prefer the less prevalent background
+        # color rather than arbitrarily treating the surrounding wall as floor.
+        walkable = min(tied, key=lambda color: counts[color])
 
     # Sprite displacement is estimated from the player's bounding box.
     x0, y0, x1, y1 = player["bbox"]
