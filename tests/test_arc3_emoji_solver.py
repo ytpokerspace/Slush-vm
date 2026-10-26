@@ -406,5 +406,17 @@ class Arc3EmojiSolverTests(unittest.TestCase):
         self.assertIsNone(infer_navigation({"observation": "unknown"}))
 
 
+    def test_frame_observation_preserves_raw_frame_layers(self):
+        frame = SimpleNamespace(
+            state="NOT_FINISHED",
+            levels_completed=0,
+            win_levels=7,
+            frame=[[[0, 1], [2, 3]]],
+        )
+        observation = frame_observation(frame)
+        self.assertEqual(observation["frame"], [[[0, 1], [2, 3]]])
+        self.assertEqual(extract_grid(observation), [[0, 1], [2, 3]])
+
+
 if __name__ == "__main__":
     unittest.main()
