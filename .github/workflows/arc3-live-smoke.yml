@@ -31,9 +31,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - name: Install official ARC-AGI-3 toolkit
-        run: python -m pip install --upgrade pip arc-agi
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "git+https://github.com/arcprize/ARC-AGI.git"
       - name: Run bounded live environment smoke test
         env:
           GAME_ID: ${{ inputs.game_id || 'ls20' }}
