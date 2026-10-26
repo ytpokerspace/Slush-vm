@@ -135,26 +135,38 @@ def infer_navigation(observation: Any) -> dict[str, Any] | None:
     passable = {walkable} | target_colors | player_colors
 
     start = (px, py)
-    goal = (tx, ty)
+
+    # Sprite centers need not land on an occupied target pixel. Treat a center as
+    # reaching the target when the player's estimated footprint overlaps any
+    # target cell; this handles hollow/asymmetric target sprites.
+    radius = max(1, step // 2)
+    def reaches_target(position: tuple[int, int]) -> bool:
+        return any(
+            abs(position[0] - x) <= radius and abs(position[1] - y) <= radius
+            for x, y in target["cells"]
+        )
+
     queue = deque([start])
     previous: dict[tuple[int, int], tuple[int, int] | None] = {start: None}
+    goal_node: tuple[int, int] | None = None
     while queue:
         current = queue.popleft()
-        if current == goal:
+        if reaches_target(current):
+            goal_node = current
             break
         for dx, dy in ((0, -step), (0, step), (-step, 0), (step, 0)):
             nxt = (current[0] + dx, current[1] + dy)
             nx, ny = nxt
             if nxt in previous or not (0 <= ny < min(len(grid), 55) and 0 <= nx < len(grid[ny])):
                 continue
-            if grid[ny][nx] not in passable:
+            if grid[ny][nx] not in passable and not reaches_target(nxt):
                 continue
             previous[nxt] = current
             queue.append(nxt)
 
-    if goal not in previous:
+    if goal_node is None:
         return None
-    node = goal
+    node = goal_node
     while previous[node] is not None and previous[node] != start:
         node = previous[node]  # Walk backward to the first step after start.
     dx = node[0] - px
