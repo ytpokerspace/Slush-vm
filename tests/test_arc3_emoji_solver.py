@@ -408,6 +408,12 @@ class Arc3EmojiSolverTests(unittest.TestCase):
         self.assertEqual(navigation["player_center"], [36, 47])
         self.assertEqual(navigation["target_center"], [36, 12])
 
+    def test_visual_policy_rejects_unrelated_foreground_blob(self):
+        grid = self.make_visual_navigation_grid()
+        for x, y in ((35, 11), (36, 11), (37, 11), (37, 12), (37, 13), (35, 13)):
+            grid[y][x] = 7
+        self.assertIsNone(infer_navigation({"frame": [grid]}))
+
     def test_visual_policy_scores_only_the_preferred_legal_direction_highest(self):
         records = [{"name": "ACTION1"}, {"name": "ACTION2"}, {"name": "ACTION3"}]
         scored = score_navigation_candidates(records, {"action": "ACTION3"})
