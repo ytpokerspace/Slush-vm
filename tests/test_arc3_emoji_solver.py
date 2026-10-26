@@ -334,11 +334,11 @@ class Arc3EmojiSolverTests(unittest.TestCase):
 
 
     def test_benchmark_extracts_final_runner_json(self):
-        output = 'SDK log line\\n{"game_id":"ls20","steps":8,"won":false}\\n'
+        output = 'SDK log line\n{"game_id":"ls20","steps":8,"won":false}\n'
         self.assertEqual(extract_result(output)["game_id"], "ls20")
 
     def test_benchmark_ignores_unrelated_json(self):
-        self.assertIsNone(extract_result('{"message":"hello"}\\nnot json'))
+        self.assertIsNone(extract_result('{"message":"hello"}\nnot json'))
 
     def test_benchmark_summary_calculates_win_and_level_rates(self):
         summary = summarize_results([
