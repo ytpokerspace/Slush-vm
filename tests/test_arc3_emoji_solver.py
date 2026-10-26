@@ -334,7 +334,7 @@ class Arc3EmojiSolverTests(unittest.TestCase):
 
 
     def test_benchmark_extracts_final_runner_json(self):
-        output = 'SDK log line\n{"game_id":"ls20","steps":8,"won":false}\n'
+        output = "SDK log line\n{\"game_id\":\"ls20\",\"steps\":8,\"won\":false}\n"
         self.assertEqual(extract_result(output)["game_id"], "ls20")
 
     def test_benchmark_ignores_unrelated_json(self):
