@@ -49,11 +49,20 @@ class Arc3EmojiSolverTests(unittest.TestCase):
         result = solver.choose_action({"grid": [[0]]}, ["wait"])
         self.assertEqual(result["status"], "possible_loop")
 
-    def test_state_change_resets_per_state_attempt_tracking(self):
+    def test_state_change_rotates_actions_instead_of_starving_later_actions(self):
         solver = Arc3EmojiSolver()
         first = solver.choose_action({"x": 1}, ["a", "b"])["action"]
         second = solver.choose_action({"x": 2}, ["a", "b"])["action"]
-        self.assertEqual(first, second)
+        self.assertNotEqual(first, second)
+
+    def test_round_robin_visits_all_legal_actions_across_new_states(self):
+        solver = Arc3EmojiSolver()
+        legal = ["north", "south", "east", "west"]
+        selected = [
+            solver.choose_action({"step": i}, legal)["action"]
+            for i in range(4)
+        ]
+        self.assertEqual(set(selected), set(legal))
 
     def test_equal_scores_use_input_order(self):
         actions = [{"id": "first", "score": 1}, {"id": "second", "score": 1}]
