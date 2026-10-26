@@ -11,6 +11,7 @@ from enum import Enum
 from typing import Any
 
 from arc3.emoji_solver import Arc3EmojiSolver
+from arc3.level_planner import LevelPlanningMemory
 from arc3.visual_policy import infer_navigation, score_navigation_candidates
 
 
@@ -206,6 +207,7 @@ def main() -> int:
         parser.exit(2, "Environment did not return an initial observation.\n")
 
     solver = Arc3EmojiSolver()
+    planning_memory = LevelPlanningMemory()
     history: list[dict[str, Any]] = []
     steps = 0
     navigation_steps = 0
@@ -220,6 +222,7 @@ def main() -> int:
             args.max_click_points, previous_observation,
         )
         navigation = infer_navigation(observation)
+        planning_memory.update_observation(observation, navigation)
         action_records = score_navigation_candidates(action_records, navigation)
         last_navigation = navigation
         result = solver.choose_action(observation, action_records, history)
@@ -253,6 +256,11 @@ def main() -> int:
             terminal = "environment_returned_no_observation"
             break
         previous_observation = observation
+        next_observation = frame_observation(next_frame)
+        planning_memory.record_action(selected_record, observation, next_observation)
+        next_observation = frame_observation(next_frame)
+        planning_memory.record_action(selected_record, observation, next_observation)
+        previous_observation = observation
         frame = next_frame
         state = getattr(frame, "state", None)
         state_name = getattr(state, "name", str(state)).upper() if state is not None else ""
@@ -282,6 +290,7 @@ def main() -> int:
         "policy": "observation-only visual target heuristic with deterministic exploration fallback",
         "navigation_steps": navigation_steps,
         "last_navigation": last_navigation,
+        "planning_memory": planning_memory.snapshot(),
         "click_strategy": args.click_strategy,
         "scorecard": scorecard,
         "last_state": frame_observation(frame).get("__arc3_state"),
