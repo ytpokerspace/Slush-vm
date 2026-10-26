@@ -100,10 +100,14 @@ def infer_navigation(observation: Any) -> dict[str, Any] | None:
     px, py = player["center"]
     player_colors = player["colors"]
 
+    # Reject unrelated foreground blobs: require the documented shared-color cue
+    # and a target above the player. Without these cues, use exploration instead.
     target_candidates = [
         comp for comp in components
         if comp is not player
         and 2 <= comp["area"] < player["area"]
+        and bool(comp["colors"] & player_colors)
+        and comp["center"][1] < py
     ]
     if not target_candidates:
         return None
