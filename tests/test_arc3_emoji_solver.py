@@ -354,6 +354,17 @@ class Arc3EmojiSolverTests(unittest.TestCase):
         self.assertAlmostEqual(summary["win_rate"], 0.5)
         self.assertAlmostEqual(summary["level_completion_fraction"], 2 / 11)
 
+    def test_benchmark_summary_excludes_error_records_with_partial_steps(self):
+        summary = summarize_results([
+            {"game_id": "ls20", "steps": 8, "won": False},
+            {"game_id": "ls20", "steps": 0, "won": False, "error": "timeout"},
+        ])
+        self.assertEqual(summary["runs_requested"], 2)
+        self.assertEqual(summary["runs_executed"], 1)
+        self.assertEqual(summary["runs_failed"], 1)
+        self.assertEqual(summary["total_actions"], 8)
+        self.assertEqual(summary["win_rate"], 0.0)
+
     def test_benchmark_summary_handles_all_failed_runs(self):
         summary = summarize_results([{"game_id": "ls20", "error": "offline"}])
         self.assertEqual(summary["runs_failed"], 1)
