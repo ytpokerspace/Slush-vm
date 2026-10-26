@@ -40,3 +40,35 @@ jobs:
           cat runner-output.txt
           test "$status" -eq 2
           grep -q "Missing optional dependency:" runner-output.txt
+
+  live-benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install optional ARC-AGI-3 SDK
+        continue-on-error: true
+        run: python -m pip install --upgrade pip arc-agi
+      - name: Run bounded live episode and preserve report
+        run: |
+          set +e
+          python -m arc3.benchmark --games ls20 --seeds 0 --max-actions 12 --max-click-points 8 --run-timeout 120 --output arc3-benchmark.json > arc3-benchmark.log 2>&1
+          status=$?
+          cat arc3-benchmark.log
+          if [ ! -f arc3-benchmark.json ]; then
+            printf '{"status":"infrastructure_failure","exit_code":%s,"note":"No benchmark JSON was produced; inspect the log artifact."}\n' "$status" > arc3-benchmark.json
+          fi
+          echo "Benchmark process exit code: $status"
+          exit 0
+      - name: Upload benchmark report and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-live-benchmark
+          path: |
+            arc3-benchmark.json
+            arc3-benchmark.log
+          if-no-files-found: warn
