@@ -36,10 +36,11 @@ class SearchConfig:
     novelty_weight: float = 0.08
     prune_delta: float = 0.35
     seed: int = 7
+    top_k: int = 3
 
     def __post_init__(self) -> None:
         for name in ("iterations", "depth", "beam_width", "branching_limit",
-                     "max_nodes", "max_children"):
+                     "max_nodes", "max_children", "top_k"):
             if getattr(self, name) < 1:
                 raise ValueError(f"{name} must be >= 1")
         if self.exploration < 0 or not 0 < self.discount <= 1:
@@ -83,6 +84,7 @@ def compile_dsl(source: str) -> SearchConfig:
         "NODES": ("max_nodes", int), "CHILDREN": ("max_children", int),
         "UCT": ("exploration", float), "DISCOUNT": ("discount", float),
         "NOVELTY": ("novelty_weight", float), "SEED": ("seed", int),
+        "TOPK": ("top_k", int),
     }
     for line_no, raw in enumerate(source.splitlines(), 1):
         line = raw.split("#", 1)[0].strip()
@@ -158,10 +160,28 @@ def search(
     if not ranked or not ranked[0][2]:
         return SearchResult(None, evaluate(initial), (), created, pruned, 0, "no_plan")
     # Seed the tree with the best beam prefix; MCTS then explores bounded children.
-    root = Node(initial, children=[], untried=list(actions(initial))[:cfg.branching_limit])
+    # Rank first-step candidates by estimated next-state value, then let MCTS
+    # explore only the top K. This is a heuristic shortlist, not a calibrated
+    # probability distribution.
+    first_candidates = []
+    for action in list(actions(initial))[:cfg.branching_limit]:
+        if created >= cfg.max_nodes:
+            pruned += 1
+            break
+        try:
+            next_state = transition(initial, action)
+            first_candidates.append((evaluate(next_state), action))
+        except Exception:
+            pruned += 1
+    first_candidates.sort(key=lambda pair: pair[0], reverse=True)
+    shortlist = [action for _, action in first_candidates[:cfg.top_k]]
+    pruned += max(0, len(first_candidates) - len(shortlist))
+    if not shortlist:
+        return SearchResult(None, evaluate(initial), (), created, pruned, 0, "no_candidates")
+    root = Node(initial, children=[], untried=shortlist.copy())
     rng = random.Random(cfg.seed)
-    best_action = ranked[0][2][0]
-    best_score = ranked[0][0]
+    best_action = shortlist[0]
+    best_score = first_candidates[0][0]
     seen = {key(initial)}
     iterations = 0
     for _ in range(cfg.iterations):
@@ -183,8 +203,8 @@ def search(
                     pruned += 1
                     continue
                 seen.add(state_key)
-                child = Node(next_state, node, action, children=[],
-                             untried=list(actions(next_state))[:cfg.branching_limit])
+                child_actions = list(actions(next_state))[:min(cfg.branching_limit, cfg.max_children)]
+                child = Node(next_state, node, action, children=[], untried=child_actions)
                 node.children.append(child)
                 node = child
                 state = next_state
@@ -194,7 +214,7 @@ def search(
                 break
             if not node.children:
                 break
-            node = max(node.children, key=lambda child: _uct(child, node.visits, cfg.exploration))
+            node = max(node.children[:cfg.max_children], key=lambda child: _uct(child, node.visits, cfg.exploration))
             state = node.state
             path.append(node)
             depth += 1
@@ -228,13 +248,19 @@ def search(
         first = node
         while first.parent is not None and first.parent is not root:
             first = first.parent
-        candidate_action = first.action if first.parent is root else (path[1].action if len(path) > 1 else None)
+        candidate_action = path[1].action if len(path) > 1 else None
         if candidate_action is not None and rollout_score > best_score:
             best_action, best_score = candidate_action, rollout_score
         if created >= cfg.max_nodes:
             pruned += 1
             break
-    return SearchResult(best_action, best_score, ranked[0][2], created, pruned,
+    # Final choice favors explored root children; the top-K heuristic is a fallback.
+    if root.children:
+        winner = max(root.children, key=lambda child: (child.visits, child.value))
+        best_action = winner.action
+        best_score = winner.value if winner.visits else evaluate(winner.state)
+    plan = ranked[0][2] if ranked and ranked[0][2] else (best_action,)
+    return SearchResult(best_action, best_score, plan, created, pruned,
                         iterations, "bounded_search_complete")
 
 
