@@ -11,6 +11,7 @@ from enum import Enum
 from typing import Any
 
 from arc3.emoji_solver import Arc3EmojiSolver
+from arc3.visual_policy import infer_navigation, score_navigation_candidates
 
 
 def to_jsonable(value: Any) -> Any:
@@ -170,6 +171,8 @@ def main() -> int:
     solver = Arc3EmojiSolver()
     history: list[dict[str, Any]] = []
     steps = 0
+    navigation_steps = 0
+    last_navigation = None
     terminal = "action_limit"
     while steps < args.max_actions:
         legal = list(env.action_space or [])
@@ -178,6 +181,9 @@ def main() -> int:
             legal, observation, args.click_strategy, args.click_x, args.click_y,
             args.max_click_points,
         )
+        navigation = infer_navigation(observation)
+        action_records = score_navigation_candidates(action_records, navigation)
+        last_navigation = navigation
         result = solver.choose_action(observation, action_records, history)
         if result["action"] is None:
             terminal = "no_legal_actions"
@@ -193,7 +199,13 @@ def main() -> int:
             terminal = "policy_returned_non_legal_action"
             break
 
-        history.append({"observation": observation, "action": selected_record})
+        if navigation is not None and selected_name == navigation.get("action"):
+            navigation_steps += 1
+        history.append({
+            "observation": observation,
+            "action": selected_record,
+            "navigation": navigation,
+        })
         action_data = selected_record.get("data") if selected.is_complex() else None
         if selected.is_complex() and not isinstance(action_data, dict):
             action_data = {"x": args.click_x, "y": args.click_y}
@@ -228,7 +240,9 @@ def main() -> int:
         "won": terminal == "win",
         "levels_completed": getattr(frame, "levels_completed", None),
         "win_levels": getattr(frame, "win_levels", None),
-        "policy": "deterministic exploration baseline; not a benchmark-performance claim",
+        "policy": "observation-only visual target heuristic with deterministic exploration fallback",
+        "navigation_steps": navigation_steps,
+        "last_navigation": last_navigation,
         "click_strategy": args.click_strategy,
         "scorecard": scorecard,
         "last_state": frame_observation(frame).get("__arc3_state"),
