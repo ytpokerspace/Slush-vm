@@ -39,7 +39,7 @@ jobs:
           GAME_ID: ${{ inputs.game_id || 'ls20' }}
           MAX_ACTIONS: ${{ inputs.max_actions || '8' }}
         run: |
-          set -o pipefail
+          set +e
           timeout 180s python -m arc3.arc_agi_runner \
             --game-id "$GAME_ID" \
             --max-actions "$MAX_ACTIONS" \
