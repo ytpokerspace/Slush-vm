@@ -418,5 +418,16 @@ class Arc3EmojiSolverTests(unittest.TestCase):
         self.assertEqual(extract_grid(observation), [[0, 1], [2, 3]])
 
 
+    def test_visual_policy_prefers_corridor_color_over_tied_wall_boundary(self):
+        grid = self.make_visual_navigation_grid()
+        for y in range(10, 52):
+            for x in list(range(30, 34)) + list(range(39, 43)):
+                grid[y][x] = 4
+        navigation = infer_navigation({"frame": [grid]})
+        self.assertIsNotNone(navigation)
+        self.assertEqual(navigation["action"], "ACTION1")
+        self.assertEqual(navigation["walkable_color"], 3)
+
+
 if __name__ == "__main__":
     unittest.main()
