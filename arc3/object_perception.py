@@ -99,7 +99,8 @@ def perceive_objects(
     grid = extract_grid(observation)
     if grid is None or not grid or not any(grid):
         return {"status": "insufficient_grid", "objects": [], "background_colors": []}
-    flat = [value for row in grid[:max_height] if max_height else grid for value in row]
+    rows = grid[:max_height] if max_height else grid
+    flat = [value for row in rows for value in row]
     if not flat:
         return {"status": "insufficient_grid", "objects": [], "background_colors": []}
     if background_colors is None:
