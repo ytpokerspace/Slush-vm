@@ -1,5 +1,6 @@
 # Bounded, aggressively pruned planner defaults
 MCTS 128
+TOPK 3
 DEPTH 8
 BEAM 5
 BRANCH 4
