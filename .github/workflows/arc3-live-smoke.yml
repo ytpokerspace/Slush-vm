@@ -14,7 +14,7 @@ on:
         default: "ls20"
         type: string
       max_actions:
-        description: "Maximum actions per episode"
+        description: "Maximum actions per episode for collision-aware visual navigation"
         required: true
         default: "64"
         type: string
