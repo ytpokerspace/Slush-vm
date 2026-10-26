@@ -80,7 +80,13 @@ The runner maintains separate partitions for:
 
 This is a lightweight bookkeeping and planning-memory layer, not a learned world model.
 It avoids declaring level completion unless the observation reports progress or a win
-signal. The final runner JSON includes a `planning_memory` snapshot. Run the focused
+signal. The runner also forecasts motion using three explicit what-if branches:
+continue current motion, stop, or reverse. The current heuristic priors are 0.60,
+0.25, and 0.15 respectively; they are normalized engineering defaults, **not measured
+or calibrated probabilities**. The forecast lists predicted color-centroids and marks
+the highest-prior scenario, but should not be trusted as a real likelihood until
+validated against subsequent frames. The final runner JSON includes `planning_memory`
+and `motion_forecast`. Run the focused
 unit tests with:
 
 ```sh
