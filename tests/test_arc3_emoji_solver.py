@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 from arc3.arc_agi_runner import (candidate_click_points, frame_observation, make_action_records, to_jsonable)
 from arc3.benchmark import extract_result, summarize_results
+from arc3.visual_policy import extract_grid, infer_navigation, score_navigation_candidates
 from arc3.emoji_solver import Arc3EmojiSolver, EMOJI_PROGRAM, grid_summary, stable_key, state_key
 
 
@@ -358,6 +359,52 @@ class Arc3EmojiSolverTests(unittest.TestCase):
         self.assertEqual(summary["runs_failed"], 1)
         self.assertEqual(summary["runs_executed"], 0)
         self.assertEqual(summary["win_rate"], 0.0)
+
+
+    @staticmethod
+    def make_visual_navigation_grid():
+        grid = [[4 for _ in range(64)] for _ in range(64)]
+        for x in range(64):
+            grid[0][x] = 5
+            grid[63][x] = 5
+        for y in range(64):
+            grid[y][0] = 5
+            grid[y][63] = 5
+        for y in range(10, 52):
+            for x in range(30, 43):
+                grid[y][x] = 3
+        # A two-color moving sprite and a smaller shared-color target, as seen in
+        # the live observation stream. This is a synthetic fixture, not game source.
+        for y in range(45, 47):
+            for x in range(34, 39):
+                grid[y][x] = 12
+        for y in range(47, 50):
+            for x in range(34, 39):
+                grid[y][x] = 9
+        for y in range(11, 14):
+            for x in range(35, 38):
+                grid[y][x] = 9
+        return grid
+
+    def test_visual_policy_extracts_first_frame_layer(self):
+        grid = self.make_visual_navigation_grid()
+        self.assertEqual(extract_grid({"frame": [grid]}), grid)
+
+    def test_visual_policy_finds_direct_upward_target_path(self):
+        grid = self.make_visual_navigation_grid()
+        navigation = infer_navigation({"frame": [grid]})
+        self.assertIsNotNone(navigation)
+        self.assertEqual(navigation["action"], "ACTION1")
+        self.assertEqual(navigation["player_center"], [36, 47])
+        self.assertEqual(navigation["target_center"], [36, 12])
+
+    def test_visual_policy_scores_only_the_preferred_legal_direction_highest(self):
+        records = [{"name": "ACTION1"}, {"name": "ACTION2"}, {"name": "ACTION3"}]
+        scored = score_navigation_candidates(records, {"action": "ACTION3"})
+        self.assertEqual([r["score"] for r in scored], [0.0, 0.0, 100.0])
+
+    def test_visual_policy_falls_back_when_frame_has_no_grid(self):
+        self.assertIsNone(infer_navigation({"observation": "unknown"}))
 
 
 if __name__ == "__main__":
