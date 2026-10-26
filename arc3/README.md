@@ -62,9 +62,30 @@ Complex actions use a bounded exploration strategy:
 - `--click-x` and `--click-y` set the center/fallback coordinate.
 - `--max-click-points` bounds the number of candidate clicks.
 
-These candidates are exploratory, not semantic object detection. The policy does not
+Foreground mode now prefers nonzero cells that changed since the previous frame,
+then falls back to visible foreground cells when no motion is detected. This is a
+motion-salience heuristic, not semantic object recognition. The policy does not
 understand game-specific mechanics, and a non-winning run is not a failure of the
 runner itself. The JSON result distinguishes `won` from whether the run executed.
+
+## Partitioned level completion and planning memory
+
+The runner maintains separate partitions for:
+- `level_progress`: explicitly reported levels completed, reported total, and completion signal.
+- `scene_state`: bounded frame shape and current reported state.
+- `goal_hypotheses`: evidence behind a candidate target, labeled as heuristic.
+- `active_plan`: the current proposed action and target.
+- `action_outcomes`: whether the observation changed after an action.
+- `uncertainties`: why the visual planner could not propose a reliable route.
+
+This is a lightweight bookkeeping and planning-memory layer, not a learned world model.
+It avoids declaring level completion unless the observation reports progress or a win
+signal. The final runner JSON includes a `planning_memory` snapshot. Run the focused
+unit tests with:
+
+```sh
+python -m unittest discover -s tests -p 'test_arc3_*.py' -v
+```
 
 ## Live smoke workflow
 
