@@ -43,6 +43,11 @@ def frame_observation(frame: Any) -> dict[str, Any]:
     normalized = to_jsonable(frame)
     if not isinstance(normalized, dict):
         normalized = {"frame": normalized}
+    # Prefer the SDK's raw frame attribute over model_dump's serialization. Some
+    # SDK/Pydantic versions omit or reshape NumPy frame layers in model_dump output.
+    raw_frame = getattr(frame, "frame", None)
+    if raw_frame is not None:
+        normalized["frame"] = to_jsonable(raw_frame)
     state = getattr(frame, "state", None)
     levels_completed = getattr(frame, "levels_completed", None)
     win_levels = getattr(frame, "win_levels", None)
