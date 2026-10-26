@@ -32,7 +32,7 @@ def extract_result(stdout: str) -> dict[str, Any] | None:
 
 def summarize_results(results: list[dict[str, Any]]) -> dict[str, Any]:
     """Aggregate outcomes without treating an incomplete run as a win."""
-    valid = [r for r in results if isinstance(r.get("steps"), int)]
+    # An error record may contain steps=0 for timeout/no-output; it is not an executed episode.\n    valid = [r for r in results if isinstance(r.get("steps"), int) and not r.get("error")]
     wins = sum(1 for r in valid if r.get("won") is True)
     levels = sum(int(r.get("levels_completed") or 0) for r in valid)
     win_levels = sum(int(r.get("win_levels") or 0) for r in valid)
