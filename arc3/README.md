@@ -68,11 +68,13 @@ runner itself. The JSON result distinguishes `won` from whether the run executed
 
 ## Live smoke workflow
 
-The GitHub Actions workflow `ARC-AGI-3 Live Smoke Test` installs the official SDK,
-runs a bounded live test on `ls20`, and uploads the JSON result plus any recording.
-It runs on pushes to this feature branch and can also be manually dispatched with a
-game ID and action budget. A failed environment connection is reported as a CI
-failure; a completed run can succeed even if the baseline did not win.
+The GitHub Actions workflow `ARC-AGI-3 Live Benchmark` installs the official SDK,
+runs a bounded live test, and uploads the JSON result plus any recording. It can be
+manually dispatched with a game ID, action budget, and seed list. The automatic push
+trigger is intentionally limited to changes to the workflow file so ordinary code
+pushes do not unexpectedly consume live benchmark time. A failed environment
+connection is reported as a CI failure; a completed run can succeed even if the
+baseline did not win.
 
 ## Integration boundary and next research steps
 
