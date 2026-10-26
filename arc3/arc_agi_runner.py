@@ -1,8 +1,7 @@
 """Experimental runner for the official ARC-AGI-3 Python toolkit.
 
-Install the official toolkit separately (pip install arc-agi). This runner is
-intended for smoke-testing the adapter against an environment, not as a strong
-game-solving policy. Complex click actions use a configurable fixed coordinate.
+Install the official toolkit separately (pip install arc-agi). This runner uses a
+deterministic exploratory policy; it does not claim strong or benchmark-level play.
 """
 from __future__ import annotations
 
@@ -39,15 +38,88 @@ def to_jsonable(value: Any) -> Any:
 
 
 def frame_observation(frame: Any) -> dict[str, Any]:
-    """Keep the complete serializable frame plus explicit terminal/progress fields."""
+    """Keep the full serializable frame plus explicit terminal/progress fields."""
     normalized = to_jsonable(frame)
     if not isinstance(normalized, dict):
         normalized = {"frame": normalized}
     state = getattr(frame, "state", None)
     levels_completed = getattr(frame, "levels_completed", None)
+    win_levels = getattr(frame, "win_levels", None)
     normalized["__arc3_state"] = getattr(state, "name", str(state)) if state is not None else None
     normalized["__arc3_levels_completed"] = to_jsonable(levels_completed)
+    normalized["__arc3_win_levels"] = to_jsonable(win_levels)
     return normalized
+
+
+def candidate_click_points(
+    observation: Any,
+    strategy: str = "foreground",
+    center_x: int = 32,
+    center_y: int = 32,
+    max_points: int = 32,
+) -> list[dict[str, int]]:
+    """Generate bounded deterministic click candidates from a serialized frame.
+
+    FrameDataRaw.frame is a stack of 2D layers. For foreground mode, sample cells
+    with nonzero values. Scan mode samples an 8x8 coordinate lattice. Center mode
+    yields only the configured center. These are exploration candidates, not
+    semantic object detection.
+    """
+    if strategy == "center":
+        return [{"x": center_x, "y": center_y}]
+    if strategy == "scan":
+        return [{"x": x, "y": y} for y in range(4, 64, 8) for x in range(4, 64, 8)][:max_points]
+    if strategy != "foreground":
+        raise ValueError(f"unsupported click strategy: {strategy}")
+
+    frame = observation.get("frame") if isinstance(observation, dict) else None
+    if not isinstance(frame, list):
+        return [{"x": center_x, "y": center_y}]
+
+    # Accept either a stack of 2D layers or a single 2D grid.
+    if frame and isinstance(frame[0], list) and frame[0] and not isinstance(frame[0][0], list):
+        layers = [frame]
+    else:
+        layers = frame
+
+    points: list[tuple[int, int]] = []
+    seen: set[tuple[int, int]] = set()
+    for layer in layers:
+        if not isinstance(layer, list):
+            continue
+        for y, row in enumerate(layer[:64]):
+            if not isinstance(row, list):
+                continue
+            for x, cell in enumerate(row[:64]):
+                if cell not in (0, "0", None) and (x, y) not in seen:
+                    seen.add((x, y))
+                    points.append((x, y))
+    if not points:
+        return [{"x": center_x, "y": center_y}]
+    # Evenly sample the discovered positions so large foreground areas don't
+    # exhaust the action budget on adjacent cells.
+    if len(points) > max_points:
+        indices = [round(i * (len(points) - 1) / (max_points - 1)) for i in range(max_points)]
+        points = [points[i] for i in indices]
+    return [{"x": x, "y": y} for x, y in points]
+
+
+def make_action_records(legal_actions: list[Any], observation: dict[str, Any],
+                        click_strategy: str, center_x: int, center_y: int,
+                        max_click_points: int = 32) -> list[dict[str, Any]]:
+    """Expand complex legal actions into legal action + coordinate candidates."""
+    records: list[dict[str, Any]] = []
+    points = candidate_click_points(
+        observation, click_strategy, center_x, center_y, max_click_points
+    )
+    for action in legal_actions:
+        name = getattr(action, "name", str(action))
+        is_complex = callable(getattr(action, "is_complex", None)) and action.is_complex()
+        if is_complex:
+            records.extend({"name": name, "data": point} for point in points)
+        else:
+            records.append({"name": name})
+    return records
 
 
 def main() -> int:
@@ -55,8 +127,10 @@ def main() -> int:
     parser.add_argument("--game-id", default="ls20", help="ARC-AGI-3 game id (default: ls20)")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--max-actions", type=int, default=100)
-    parser.add_argument("--click-x", type=int, default=32, help="Fixed x for complex actions")
-    parser.add_argument("--click-y", type=int, default=32, help="Fixed y for complex actions")
+    parser.add_argument("--click-x", type=int, default=32, help="Center/fallback x coordinate")
+    parser.add_argument("--click-y", type=int, default=32, help="Center/fallback y coordinate")
+    parser.add_argument("--click-strategy", choices=("foreground", "scan", "center"), default="foreground")
+    parser.add_argument("--max-click-points", type=int, default=32)
     parser.add_argument("--render-mode", choices=("terminal", "terminal-fast", "human"))
     parser.add_argument("--save-recording", action="store_true")
     args = parser.parse_args()
@@ -65,6 +139,8 @@ def main() -> int:
         parser.error("--max-actions must be at least 1")
     if not (0 <= args.click_x <= 63 and 0 <= args.click_y <= 63):
         parser.error("click coordinates must be between 0 and 63")
+    if not (1 <= args.max_click_points <= 4096):
+        parser.error("--max-click-points must be between 1 and 4096")
 
     try:
         import arc_agi
@@ -82,7 +158,9 @@ def main() -> int:
     if env is None:
         parser.exit(2, f"Could not create ARC environment {args.game_id!r}. Check SDK access and game id.\n")
 
-    frame = env.observation_space or env.reset()
+    frame = env.observation_space
+    if frame is None:
+        frame = env.reset()
     if frame is None:
         parser.exit(2, "Environment did not return an initial observation.\n")
 
@@ -92,14 +170,18 @@ def main() -> int:
     terminal = "action_limit"
     while steps < args.max_actions:
         legal = list(env.action_space or [])
-        action_records = [{"name": getattr(action, "name", str(action))} for action in legal]
         observation = frame_observation(frame)
+        action_records = make_action_records(
+            legal, observation, args.click_strategy, args.click_x, args.click_y,
+            args.max_click_points,
+        )
         result = solver.choose_action(observation, action_records, history)
         if result["action"] is None:
             terminal = "no_legal_actions"
             break
 
-        selected_name = result["action"]["name"]
+        selected_record = result["action"]
+        selected_name = selected_record["name"]
         selected = next(
             (action for action in legal if getattr(action, "name", str(action)) == selected_name),
             None,
@@ -108,8 +190,10 @@ def main() -> int:
             terminal = "policy_returned_non_legal_action"
             break
 
-        history.append({"observation": observation, "action": result["action"]})
-        action_data = {"x": args.click_x, "y": args.click_y} if selected.is_complex() else None
+        history.append({"observation": observation, "action": selected_record})
+        action_data = selected_record.get("data") if selected.is_complex() else None
+        if selected.is_complex() and not isinstance(action_data, dict):
+            action_data = {"x": args.click_x, "y": args.click_y}
         next_frame = env.step(selected, data=action_data)
         steps += 1
         if next_frame is None:
@@ -127,7 +211,7 @@ def main() -> int:
 
     scorecard = None
     try:
-        score = arcade.get_scorecard()
+        score = arcade.close_scorecard()
         if score is not None:
             scorecard = to_jsonable(score)
     except Exception as exc:
@@ -139,11 +223,16 @@ def main() -> int:
         "steps": steps,
         "terminal": terminal,
         "won": terminal == "win",
-        "policy": "deterministic baseline; not a benchmark-performance claim",
+        "levels_completed": getattr(frame, "levels_completed", None),
+        "win_levels": getattr(frame, "win_levels", None),
+        "policy": "deterministic exploration baseline; not a benchmark-performance claim",
+        "click_strategy": args.click_strategy,
         "scorecard": scorecard,
         "last_state": frame_observation(frame).get("__arc3_state"),
     }, ensure_ascii=False))
-    return 0 if terminal == "win" else 1
+    # A completed run is a successful benchmark execution even if it did not win.
+    # The result JSON distinguishes "won" from "ran successfully".
+    return 0 if steps > 0 else 1
 
 
 if __name__ == "__main__":
