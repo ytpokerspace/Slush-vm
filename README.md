@@ -39,3 +39,10 @@ The validator uses only the Python standard library. It checks required fields a
 3. Validate types, permissions, platforms, and resource constraints before execution.
 4. Separate planned, implemented, and tested states.
 5. Measure token savings and correctness instead of assuming compression improves quality.
+
+
+## ARC-AGI-3 object value planning (experimental)
+
+The ARC solver branch includes `arc3/object_value_planner.py`, a small heuristic scaffold for separating per-object decision estimates from global objective arbitration. It scores goal value, estimated success probability, information value, risk, and action cost; it can recommend pursuing, preparing for, or deferring an objective. Deferred objectives remain in the result so they can be reconsidered after new observations.
+
+This module is a decision primitive, not yet an integrated semantic object detector or a proven improvement to game performance. Its numeric inputs and utility weights are heuristics unless supplied from measured evidence. It does not generate or store private chain-of-thought; it stores compact decision factors and outcomes. Unit tests cover deferral, preparation, arbitration, and input validation.
