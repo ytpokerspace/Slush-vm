@@ -5,6 +5,8 @@ on:
     paths:
       - "arc3/**"
       - "tests/test_arc3_emoji_solver.py"
+      - "tests/test_arc3_search_dsl.py"
+      - "tests/test_arc3_memory_partition.py"
       - ".github/workflows/arc3-emoji-solver.yml"
   pull_request:
     paths:
@@ -25,9 +27,9 @@ jobs:
         with:
           python-version: "3.11"
       - name: Compile solver and optional SDK runner
-        run: python -m py_compile arc3/emoji_solver.py arc3/arc_agi_runner.py arc3/benchmark.py arc3/visual_policy.py
+        run: python -m py_compile arc3/emoji_solver.py arc3/arc_agi_runner.py arc3/benchmark.py arc3/visual_policy.py arc3/search_dsl.py arc3/memory_partition.py
       - name: Unit tests
-        run: python -m unittest discover -s tests -p 'test_arc3_emoji_solver.py' -v
+        run: python -m unittest discover -s tests -p 'test_arc3_*.py' -v
       - name: CLI smoke test
         run: |
           printf '%s\n' '{"observation":{"grid":[[0,1]]},"legal_actions":[{"button":"left"}]}' |
