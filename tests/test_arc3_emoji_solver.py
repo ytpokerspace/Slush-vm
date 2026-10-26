@@ -293,6 +293,20 @@ class Arc3EmojiSolverTests(unittest.TestCase):
             [{"x": 7, "y": 9}],
         )
 
+    def test_foreground_clicks_prioritize_changed_nonzero_cells(self):
+        current = {"frame": [[[0, 1, 0], [0, 0, 2]]]}
+        previous = {"frame": [[[0, 0, 0], [0, 0, 2]]]}
+        self.assertEqual(
+            candidate_click_points(current, "foreground", max_points=8, previous_observation=previous),
+            [{"x": 1, "y": 0}],
+        )
+
+    def test_foreground_clicks_fall_back_when_no_motion_is_visible(self):
+        current = {"frame": [[[0, 1, 0], [0, 0, 2]]]}
+        previous = {"frame": [[[0, 1, 0], [0, 0, 2]]]}
+        points = candidate_click_points(current, "foreground", max_points=8, previous_observation=previous)
+        self.assertEqual(points, [{"x": 1, "y": 0}, {"x": 2, "y": 1}])
+
     def test_click_candidates_are_bounded(self):
         grid = [[1 for _ in range(64)] for _ in range(64)]
         points = candidate_click_points({"frame": [grid]}, "foreground", max_points=8)
