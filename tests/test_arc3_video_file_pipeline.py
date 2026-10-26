@@ -12,8 +12,8 @@ class VideoFilePipelineTests(unittest.TestCase):
 
     def test_strided_windows(self):
         self.assertEqual(
-            clip_windows(7.0, clip_seconds=5.0, stride_seconds=2.5),
-            [(0.0, 5.0), (2.5, 7.5)][:1],
+            clip_windows(7.5, clip_seconds=5.0, stride_seconds=2.5),
+            [(0.0, 5.0), (2.5, 7.5)],
         )
 
     def test_exact_length_clip_is_included(self):
