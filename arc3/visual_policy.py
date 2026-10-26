@@ -140,8 +140,9 @@ def infer_navigation(observation: Any) -> dict[str, Any] | None:
             value = grid[py][x]
             if value in background and value not in player_colors and value not in target["colors"]:
                 ray_values.append(value)
-    if ray_values:
-        walkable = Counter(ray_values).most_common(1)[0][0]
+    ray_color = Counter(ray_values).most_common(1)[0][0] if ray_values else None
+    if ray_color is not None and ray_color in boundary_values:
+        walkable = ray_color
     else:
         max_boundary_count = max(boundary_values.values())
         tied = [color for color, count in boundary_values.items() if count == max_boundary_count]
