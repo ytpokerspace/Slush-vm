@@ -99,8 +99,11 @@ def candidate_click_points(
     # Evenly sample the discovered positions so large foreground areas don't
     # exhaust the action budget on adjacent cells.
     if len(points) > max_points:
-        indices = [round(i * (len(points) - 1) / (max_points - 1)) for i in range(max_points)]
-        points = [points[i] for i in indices]
+        if max_points == 1:
+            points = [points[len(points) // 2]]
+        else:
+            indices = [round(i * (len(points) - 1) / (max_points - 1)) for i in range(max_points)]
+            points = [points[i] for i in indices]
     return [{"x": x, "y": y} for x, y in points]
 
 
