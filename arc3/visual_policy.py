@@ -104,8 +104,6 @@ def infer_navigation(observation: Any) -> dict[str, Any] | None:
         comp for comp in components
         if comp is not player
         and 2 <= comp["area"] < player["area"]
-        and comp["colors"] & player_colors
-        and comp["center"][1] < py
     ]
     if not target_candidates:
         return None
