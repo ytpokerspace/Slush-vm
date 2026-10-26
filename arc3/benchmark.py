@@ -130,7 +130,7 @@ def main() -> int:
     report = summarize_results(results)
     report.update({
         "created_at": datetime.now(timezone.utc).isoformat(),
-        "policy": "deterministic exploration baseline",
+        "policy": "visual target heuristic with deterministic exploration fallback",
         "click_strategy": args.click_strategy,
         "max_actions_per_run": args.max_actions,
         "games": games,
