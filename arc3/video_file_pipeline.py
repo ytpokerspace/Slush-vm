@@ -197,6 +197,70 @@ def evaluate_video_file(
     }
 
 
+
+def export_video_dataset(
+    video_path: str | Path,
+    output_dir: str | Path,
+    *,
+    clip_seconds: float = 5.0,
+    stride_seconds: float = 5.0,
+    sample_fps: float = 4.0,
+    width: int = 160,
+    height: int = 90,
+) -> dict[str, Any]:
+    """Export sampled frames and future-target manifests; this is not model training."""
+    cv2 = _require_cv2()
+    import numpy as np
+
+    frames, timestamps, metadata = _read_sampled_frames(video_path, sample_fps, width, height)
+    root = Path(output_dir)
+    frame_dir = root / "frames"
+    frame_dir.mkdir(parents=True, exist_ok=True)
+    frame_paths = []
+    for index, (frame, timestamp) in enumerate(zip(frames, timestamps)):
+        relative = Path("frames") / f"frame_{index:06d}_{timestamp:.3f}s.jpg"
+        target_path = root / relative
+        if not cv2.imwrite(str(target_path), cv2.cvtColor(np.asarray(frame), cv2.COLOR_RGB2BGR)):
+            raise OSError(f"failed to write frame: {target_path}")
+        frame_paths.append(relative.as_posix())
+
+    clips = []
+    for clip_index, (start, end) in enumerate(clip_windows(metadata["duration_seconds"], clip_seconds, stride_seconds)):
+        indices = [i for i, t in enumerate(timestamps) if start <= t <= end]
+        if len(indices) < 3:
+            continue
+        midpoint = start + clip_seconds / 2.0
+        target_index = min(indices, key=lambda i: (abs(timestamps[i] - midpoint), i))
+        context = [i for i in indices if timestamps[i] < timestamps[target_index]]
+        future = [i for i in indices if timestamps[i] > timestamps[target_index]]
+        if not context or not future:
+            continue
+        clips.append({
+            "clip_id": f"clip_{clip_index:06d}", "start_seconds": start,
+            "end_seconds": end, "midpoint_seconds": timestamps[target_index],
+            "context_frames": [frame_paths[i] for i in context],
+            "target_frame": frame_paths[target_index],
+            "future_frames": [frame_paths[i] for i in future],
+            "label_status": "unlabeled_frame_sequence",
+        })
+    manifest = {
+        "schema": "ordinary_video_training_manifest_v1", "source": metadata,
+        "sampling": {"clip_seconds": clip_seconds, "stride_seconds": stride_seconds,
+                     "sample_fps": sample_fps, "width": width, "height": height},
+        "clips": clips,
+        "notes": [
+            "Unlabeled frame sequences for future training; no semantic event labels are inferred.",
+            "Split train/validation/test by source video, not adjacent clips, to reduce leakage.",
+            "Review licensing, privacy, and source permissions before training.",
+        ],
+    }
+    root.mkdir(parents=True, exist_ok=True)
+    (root / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    return {"output_dir": str(root), "frames_exported": len(frame_paths),
+            "clips_exported": len(clips), "manifest_path": str(root / "manifest.json"),
+            "schema": manifest["schema"]}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("video", help="path to an ordinary video file (e.g. MP4, MOV, AVI)")
@@ -208,6 +272,13 @@ def main() -> int:
     parser.add_argument("--method", choices=("persistence", "optical_flow"), default="persistence")
     parser.add_argument("--output", help="optional path for JSON results")\n    parser.add_argument("--export-dataset", help="export sampled frames and training manifest to this directory")
     args = parser.parse_args()
+    if args.export_dataset:
+        exported = export_video_dataset(
+            args.video, args.export_dataset, clip_seconds=args.clip_seconds,
+            stride_seconds=args.stride_seconds, sample_fps=args.sample_fps,
+            width=args.width, height=args.height,
+        )
+        print(json.dumps({"dataset_export": exported}, indent=2, sort_keys=True))
     result = evaluate_video_file(
         args.video, clip_seconds=args.clip_seconds, stride_seconds=args.stride_seconds,
         sample_fps=args.sample_fps, width=args.width, height=args.height, method=args.method,
