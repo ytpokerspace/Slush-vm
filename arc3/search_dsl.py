@@ -175,7 +175,7 @@ def search(
         except Exception:
             pruned += 1
     first_candidates.sort(key=lambda pair: pair[0], reverse=True)
-    shortlist = [action for _, action in first_candidates[:cfg.top_k]]
+    shortlist = [action for _, action in first_candidates[:min(cfg.top_k, cfg.max_children)]]
     pruned += max(0, len(first_candidates) - len(shortlist))
     if not shortlist:
         return SearchResult(None, evaluate(initial), (), created, pruned, 0, "no_candidates")
