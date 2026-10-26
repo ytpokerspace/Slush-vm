@@ -34,4 +34,9 @@ jobs:
             python arc3/emoji_solver.py
       - name: Verify SDK runner reports missing optional dependency cleanly
         run: |
-          python -m arc3.arc_agi_runner --help
+          set +e
+          python -m arc3.arc_agi_runner > runner-output.txt 2>&1
+          status=$?
+          cat runner-output.txt
+          test "$status" -eq 2
+          grep -q "Missing optional dependency:" runner-output.txt
