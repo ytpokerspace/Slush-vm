@@ -46,3 +46,22 @@ The validator uses only the Python standard library. It checks required fields a
 Copyright (C) 2026 William Gunnell Cox.
 
 This project is licensed under the GNU General Public License v3.0 or later (GPL-3.0-or-later). See [LICENSE](LICENSE).
+
+
+## Project at a glance
+
+**What it is:** An emoji-native surface-language and capability-runtime research project. Emoji act as readable aliases; canonical identifiers, typed contracts, versions, and permissions define the underlying capability.
+
+**Why it matters:** Symbolic interfaces are only useful when their meaning is unambiguous and their behavior can be checked. This project explores explicit capability metadata and validation rather than treating an emoji as executable behavior by itself.
+
+**Try the validator:**
+```sh
+python3 tools/validate_registry.py
+```
+This uses Python's standard library. See the linked specification, registry files, security model, and implementation-status document for scope and limitations.
+
+**Current status:** The repository documents a design draft and includes a standalone C11 capability-dispatch prototype, an offline Python workflow demo, and a benchmark harness. It is not yet a complete integrated VM/parser. Planned capabilities are not automatically implemented capabilities.
+
+**How to evaluate it:** Run the validator and project tests available in the repository. Report the environment and exact commands used. Treat performance or LLM-efficiency claims as unverified unless a reproducible benchmark and results are provided.
+
+**Attribution and license:** Copyright notice and GPL-3.0-or-later terms are in this repository's LICENSE and documentation.
