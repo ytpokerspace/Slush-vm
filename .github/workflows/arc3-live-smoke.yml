@@ -1,0 +1,73 @@
+name: ARC-AGI-3 Live Benchmark
+
+on:
+  push:
+    branches:
+      - feat/arc-agi-3-emoji-solver
+    paths:
+      - ".github/workflows/arc3-live-smoke.yml"
+  workflow_dispatch:
+    inputs:
+      game_id:
+        description: "ARC-AGI-3 game id"
+        required: true
+        default: "ls20"
+        type: string
+      max_actions:
+        description: "Maximum actions per episode for multi-object visual goal hypotheses"
+        required: true
+        default: "64"
+        type: string
+      seeds:
+        description: "Comma-separated seeds"
+        required: true
+        default: "0,1,2"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  live-benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install official ARC-AGI-3 toolkit from source
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "git+https://github.com/arcprize/ARC-AGI.git"
+      - name: Run bounded multi-seed live benchmark with visual target navigation
+        env:
+          GAME_ID: ${{ inputs.game_id || 'ls20' }}
+          MAX_ACTIONS: ${{ inputs.max_actions || '64' }}
+          SEEDS: ${{ inputs.seeds || '0,1,2' }}
+        run: |
+          set +e
+          python -m arc3.benchmark \
+            --games "$GAME_ID" \
+            --seeds "$SEEDS" \
+            --max-actions "$MAX_ACTIONS" \
+            --click-strategy foreground \
+            --max-click-points 16 \
+            --run-timeout 180 \
+            --save-recording \
+            --output arc3-benchmark.json > arc3-benchmark-console.log 2>&1
+          status=$?
+          cat arc3-benchmark-console.log
+          if [ -f arc3-benchmark.json ]; then cat arc3-benchmark.json; fi
+          exit "$status"
+      - name: Upload benchmark report and recordings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-live-benchmark-${{ github.run_id }}
+          path: |
+            arc3-benchmark.json
+            arc3-benchmark-console.log
+            recordings/**
+          if-no-files-found: warn
+          retention-days: 30

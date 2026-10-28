@@ -1,0 +1,13 @@
+# Bounded, aggressively pruned planner defaults
+MCTS 128
+TOPK 3
+DEPTH 8
+BEAM 5
+BRANCH 4
+NODES 512
+CHILDREN 16
+UCT 1.414
+DISCOUNT 0.97
+NOVELTY 0.08
+PRUNE DELTA 0.25
+SEED 7

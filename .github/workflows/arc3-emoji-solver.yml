@@ -1,0 +1,76 @@
+name: ARC-AGI-3 Emoji Solver
+
+on:
+  push:
+    paths:
+      - "arc3/**"
+      - "tests/test_arc3_*.py"
+      - ".github/workflows/arc3-emoji-solver.yml"
+  pull_request:
+    paths:
+      - "arc3/**"
+      - "tests/test_arc3_*.py"
+      - ".github/workflows/arc3-emoji-solver.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile solver, temporal models, and optional SDK runner
+        run: python -m py_compile arc3/emoji_solver.py arc3/arc_agi_runner.py arc3/benchmark.py arc3/visual_policy.py arc3/level_planner.py arc3/motion_planner.py arc3/object_value_planner.py arc3/object_perception.py arc3/search_dsl.py arc3/memory_partition.py arc3/frame_prediction.py arc3/frame_benchmark.py arc3/temporal_video.py arc3/video_file_pipeline.py arc3/physics_forecast.py
+      - name: Unit tests
+        run: python -m unittest discover -s tests -p 'test_arc3_*.py' -v
+      - name: CLI smoke test
+        run: |
+          printf '%s\n' '{"observation":{"grid":[[0,1]]},"legal_actions":[{"button":"left"}]}' |
+            python arc3/emoji_solver.py
+      - name: Verify SDK runner reports missing optional dependency cleanly
+        run: |
+          set +e
+          python -m arc3.arc_agi_runner > runner-output.txt 2>&1
+          status=$?
+          cat runner-output.txt
+          test "$status" -eq 2
+          grep -q "Missing optional dependency:" runner-output.txt
+
+  live-benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install ARC-AGI-3 SDK and engine
+        run: python -m pip install --upgrade pip arc-agi arcengine
+      - name: Run bounded live episode and preserve report
+        run: |
+          set +e
+          python -m arc3.benchmark --games ls20 --seeds 0 --max-actions 12 --max-click-points 8 --run-timeout 120 --output arc3-benchmark.json > arc3-benchmark.log 2>&1
+          status=$?
+          cat arc3-benchmark.log
+          if [ ! -f arc3-benchmark.json ]; then
+            printf '{"status":"infrastructure_failure","exit_code":%s,"note":"No benchmark JSON was produced; inspect the log artifact."}\n' "$status" > arc3-benchmark.json
+            status=1
+          fi
+          echo "Benchmark process exit code: $status"
+          # A completed benchmark may report zero wins and still be a valid experiment.
+          # Fail CI only when the benchmark itself reports an execution/infrastructure error.
+          exit "$status"
+      - name: Upload benchmark report and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-live-benchmark
+          path: |
+            arc3-benchmark.json
+            arc3-benchmark.log
+          if-no-files-found: warn
