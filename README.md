@@ -39,3 +39,10 @@ The validator uses only the Python standard library. It checks required fields a
 3. Validate types, permissions, platforms, and resource constraints before execution.
 4. Separate planned, implemented, and tested states.
 5. Measure token savings and correctness instead of assuming compression improves quality.
+
+
+## License
+
+Copyright (C) 2026 William Gunnell Cox.
+
+This project is licensed under the GNU General Public License v3.0 or later (GPL-3.0-or-later). See [LICENSE](LICENSE).
