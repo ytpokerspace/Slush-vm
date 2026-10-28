@@ -59,9 +59,12 @@ jobs:
           cat arc3-benchmark.log
           if [ ! -f arc3-benchmark.json ]; then
             printf '{"status":"infrastructure_failure","exit_code":%s,"note":"No benchmark JSON was produced; inspect the log artifact."}\n' "$status" > arc3-benchmark.json
+            status=1
           fi
           echo "Benchmark process exit code: $status"
-          exit 0
+          # A completed benchmark may report zero wins and still be a valid experiment.
+          # Fail CI only when the benchmark itself reports an execution/infrastructure error.
+          exit "$status"
       - name: Upload benchmark report and logs
         if: always()
         uses: actions/upload-artifact@v4
