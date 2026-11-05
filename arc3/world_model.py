@@ -5,11 +5,12 @@ states or infer causality beyond the controlled action/observation sequence.
 """
 from __future__ import annotations
 
-from collections import Counter, defaultdict
+from collections import Counter
 from dataclasses import dataclass, field
 import hashlib
 import json
 from typing import Any
+import random
 
 
 def canonical_json(value: Any) -> str:
@@ -108,15 +109,70 @@ class WorldModel:
     action_effects: dict[str, ActionEffectStats] = field(default_factory=dict)
     exact_transitions: dict[str, str] = field(default_factory=dict)
     transition_history: list[dict[str, Any]] = field(default_factory=list)
+    max_states: int = 128
+    state_observations: dict[str, Any] = field(default_factory=dict)
+    state_legal_actions: dict[str, list[Any]] = field(default_factory=dict)
+    state_order: list[str] = field(default_factory=list)
+    transition_counts: dict[str, Counter[str]] = field(default_factory=dict)
+    edge_outcomes: dict[str, dict[str, int]] = field(default_factory=dict)
+
+    def _remember_state(self, key: str, observation: Any) -> None:
+        if key not in self.state_observations:
+            self.state_order.append(key)
+        self.state_observations[key] = observation
+        while len(self.state_order) > self.max_states:
+            expired = self.state_order.pop(0)
+            self.state_observations.pop(expired, None)
+            self.state_legal_actions.pop(expired, None)
 
     def observe(self, observation: Any) -> dict[str, Any]:
         key = state_signature(observation)
         self.state_visits[key] += 1
+        self._remember_state(key, observation)
         return {
             "state_id": key,
             "visit_count": self.state_visits[key],
             "features": observation_features(observation),
         }
+
+    def register_legal_actions(self, observation: Any, legal_actions: list[Any]) -> str:
+        """Remember only actions explicitly supplied as legal by the environment."""
+        key = state_signature(observation)
+        self._remember_state(key, observation)
+        self.state_legal_actions[key] = list(legal_actions)
+        return key
+
+    def legal_actions_for_state(self, state_id: str) -> list[Any]:
+        return list(self.state_legal_actions.get(state_id, []))
+
+    @staticmethod
+    def _edge_key(state_id: str, action: Any) -> str:
+        return canonical_json([state_id, action_signature(action)])
+
+    def edge_stats_by_ids(self, state_id: str, action: Any) -> dict[str, Any]:
+        key = self._edge_key(state_id, action)
+        stats = self.edge_outcomes.get(key, {})
+        successors = self.transition_counts.get(key, Counter())
+        return {
+            "attempts": int(stats.get("attempts", 0)),
+            "changed": int(stats.get("changed", 0)),
+            "verified_progress_or_win": int(stats.get("verified_progress_or_win", 0)),
+            "explicit_progress": int(stats.get("explicit_progress", 0)),
+            "terminal_wins": int(stats.get("terminal_wins", 0)),
+            "known_successors": len(successors),
+            "unknown_successors": 1 if not successors else 0,
+            "most_likely_successor": successors.most_common(1)[0][0] if successors else None,
+        }
+
+    def sampled_successor(self, state_id: str, action: Any, rng: random.Random) -> str | None:
+        """Sample only from successor states actually observed for this exact edge."""
+        counts = self.transition_counts.get(self._edge_key(state_id, action))
+        if not counts:
+            return None
+        population: list[str] = []
+        for successor, count in counts.items():
+            population.extend([successor] * count)
+        return rng.choice(population)
 
     def record_transition(self, action: Any, before: Any, after: Any) -> dict[str, Any]:
         before_key = state_signature(before)
@@ -150,7 +206,20 @@ class WorldModel:
         }
         stats.recent.append(event)
         del stats.recent[:-12]
-        self.exact_transitions[canonical_json([before_key, action_signature(action)])] = after_key
+        edge_key = self._edge_key(before_key, action)
+        self.exact_transitions[edge_key] = after_key
+        self.transition_counts.setdefault(edge_key, Counter())[after_key] += 1
+        edge = self.edge_outcomes.setdefault(edge_key, {
+            "attempts": 0, "changed": 0, "verified_progress_or_win": 0,
+            "explicit_progress": 0, "terminal_wins": 0,
+        })
+        edge["attempts"] += 1
+        edge["changed"] += int(changed)
+        edge["verified_progress_or_win"] += int(progress or terminal)
+        edge["explicit_progress"] += int(progress)
+        edge["terminal_wins"] += int(terminal)
+        self._remember_state(before_key, before)
+        self._remember_state(after_key, after)
         self.transition_history.append(event)
         del self.transition_history[:-self.max_history]
         return event
@@ -171,6 +240,9 @@ class WorldModel:
     def snapshot(self) -> dict[str, Any]:
         return {
             "observed_states": len(self.state_visits),
+            "stored_state_snapshots": len(self.state_observations),
+            "states_with_legal_action_records": len(self.state_legal_actions),
+            "observed_transition_edges": len(self.transition_counts),
             "transition_count": len(self.transition_history),
             "action_effects": {key: value.snapshot() for key, value in self.action_effects.items()},
             "recent_transitions": list(self.transition_history[-20:]),
