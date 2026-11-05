@@ -86,14 +86,9 @@ def candidate_click_points(
             return []
         # Farthest-point sampling spreads a small budget across the entire
         # 8x8 playfield instead of truncating the row-major list at the top.
-        center_index = min(
-            range(len(lattice)),
-            key=lambda i: (
-                (lattice[i][0] - 31.5) ** 2 + (lattice[i][1] - 31.5) ** 2,
-                i,
-            ),
-        )
-        selected = [lattice.pop(center_index)]
+        # Keep the original top-left first point for compatibility with
+        # existing callers, then spread remaining points across the lattice.
+        selected = [lattice.pop(0)]
         while lattice and len(selected) < limit:
             next_index = max(
                 range(len(lattice)),
