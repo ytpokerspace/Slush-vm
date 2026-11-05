@@ -323,7 +323,16 @@ def main() -> int:
         if navigation is not None and selected_name == navigation.get("action"):
             navigation_steps += 1
         history.append({
-            "observation": observation,
+            "step": steps + 1,
+            "observation": {
+                "frame": observation.get("frame"),
+                "__arc3_state": observation.get("__arc3_state"),
+                "__arc3_levels_completed": observation.get("__arc3_levels_completed"),
+                "__arc3_win_levels": observation.get("__arc3_win_levels"),
+            },
+            "legal_actions": [
+                getattr(action, "name", str(action)) for action in legal
+            ],
             "action": selected_record,
             "navigation": navigation,
         })
@@ -338,6 +347,11 @@ def main() -> int:
             terminal = "environment_returned_no_observation"
             break
         next_observation = frame_observation(next_frame)
+        history[-1]["transition"] = {
+            "observation_changed": observation != next_observation,
+            "state_after": next_observation.get("__arc3_state"),
+            "levels_completed_after": next_observation.get("__arc3_levels_completed"),
+        }
         planning_memory.record_action(selected_record, observation, next_observation)
         agent.record_transition(selected_record, observation, next_observation)
         previous_observation = observation
@@ -394,6 +408,9 @@ def main() -> int:
         "object_tracks": object_track_state,
         "click_strategy": args.click_strategy,
         "scorecard": scorecard,
+        "trace_schema_version": 1,
+        "action_trace": history,
+        "final_observation": frame_observation(frame),
         "last_state": frame_observation(frame).get("__arc3_state"),
     }, ensure_ascii=False))
     # A run may finish without winning, but a missing step observation is failure.
