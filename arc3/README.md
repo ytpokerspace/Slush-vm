@@ -1,14 +1,16 @@
 # ARC-AGI-3 Emoji Solver Adapter
 
-This module adds a dependency-free baseline policy and an optional runner for the
+This module contains a dependency-free CLI baseline and an optional runner for the
 official ARC-AGI-3 Python toolkit.
 
-## Status: executable exploration baseline, not a solved benchmark agent
+## Status: experimental interactive agent, not a solved benchmark agent
 
-The policy is deterministic and tested. It only chooses actions supplied as legal by
-the caller, tracks attempted actions per exact observation, and can persist its state
-across process restarts. It does **not** infer game rules, learn a complete world
-model, or establish ARC-AGI-3 benchmark performance.
+The standalone emoji CLI remains a deterministic legal-action baseline. The optional
+SDK runner now combines visual/object heuristics, an evidence ledger, the Quantum
+Brainstorming Studio strategy-synthesis procedure, and shallow MCTS over observed
+state transitions. It learns empirical action effects during an episode, but it does
+not yet infer a complete or generalizable game simulator. No benchmark-level solving
+claim is made.
 
 ## Emoji program surface
 
