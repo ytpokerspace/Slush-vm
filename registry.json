@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "capabilities": [
+    {
+      "id": "math.add",
+      "version": "1.0.0",
+      "inputs": ["i64", "i64"],
+      "outputs": ["i64"],
+      "implementation": "vm_op_add",
+      "permissions": [],
+      "test_status": "pending",
+      "tests": ["add_positive", "add_negative", "add_zero", "overflow_rejected"]
+    }
+  ]
+}
