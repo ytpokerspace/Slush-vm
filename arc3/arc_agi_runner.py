@@ -167,6 +167,13 @@ def make_action_records(legal_actions: list[Any], observation: dict[str, Any],
     return records
 
 
+def runner_exit_code(steps: int, terminal: str) -> int:
+    """A missing environment observation is a failed execution, not a success."""
+    if steps < 1 or terminal == "environment_returned_no_observation":
+        return 1
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--game-id", default="ls20", help="ARC-AGI-3 game id (default: ls20)")
@@ -296,6 +303,7 @@ def main() -> int:
         "steps": steps,
         "terminal": terminal,
         "won": terminal == "win",
+        "execution_succeeded": runner_exit_code(steps, terminal) == 0,
         "levels_completed": getattr(frame, "levels_completed", None),
         "win_levels": getattr(frame, "win_levels", None),
         "policy": "observation-only visual target heuristic with deterministic exploration fallback",
@@ -309,9 +317,8 @@ def main() -> int:
         "scorecard": scorecard,
         "last_state": frame_observation(frame).get("__arc3_state"),
     }, ensure_ascii=False))
-    # A completed run is a successful benchmark execution even if it did not win.
-    # The result JSON distinguishes "won" from "ran successfully".
-    return 0 if steps > 0 else 1
+    # A run may finish without winning, but a missing step observation is failure.
+    return runner_exit_code(steps, terminal)
 
 
 if __name__ == "__main__":
