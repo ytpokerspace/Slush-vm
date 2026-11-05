@@ -53,3 +53,28 @@ This module is a decision primitive, not yet an integrated semantic object detec
 The ARC solver branch includes `arc3/object_perception.py`. It extracts connected components and reports geometry: area, bounding-box width/height, aspect ratio, fill density, color counts, center, relative size/dimension ranks, and tentative geometric role hypotheses. The runner stores the resulting object summary in the partitioned planning memory and includes it in its JSON output.
 
 These descriptors support "what it looks like" and "how it compares" but do not prove what an object means in game terms. The default background estimate uses the most frequent pixel value and can fail on multi-color backgrounds; explicit background colors are supported. Diagonal adjacency, occlusion, animation, and role identification remain open problems. Object identity confidence remains zero until evidence beyond geometry is added.
+
+## License
+
+Copyright (C) 2026 William Gunnell Cox.
+
+This project is licensed under the GNU General Public License v3.0 or later (GPL-3.0-or-later). See [LICENSE](LICENSE).
+
+
+## Project at a glance
+
+**What it is:** An emoji-native surface-language and capability-runtime research project. Emoji act as readable aliases; canonical identifiers, typed contracts, versions, and permissions define the underlying capability.
+
+**Why it matters:** Symbolic interfaces are only useful when their meaning is unambiguous and their behavior can be checked. This project explores explicit capability metadata and validation rather than treating an emoji as executable behavior by itself.
+
+**Try the validator:**
+```sh
+python3 tools/validate_registry.py
+```
+This uses Python's standard library. See the linked specification, registry files, security model, and implementation-status document for scope and limitations.
+
+**Current status:** The repository documents a design draft and includes a standalone C11 capability-dispatch prototype, an offline Python workflow demo, and a benchmark harness. It is not yet a complete integrated VM/parser. Planned capabilities are not automatically implemented capabilities.
+
+**How to evaluate it:** Run the validator and project tests available in the repository. Report the environment and exact commands used. Treat performance or LLM-efficiency claims as unverified unless a reproducible benchmark and results are provided.
+
+**Attribution and license:** Copyright notice and GPL-3.0-or-later terms are in this repository's LICENSE and documentation.
