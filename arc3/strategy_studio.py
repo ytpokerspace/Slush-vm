@@ -69,13 +69,13 @@ def brainstorm_action_priors(
         # verified level progress or a terminal win exempts an action family.
         unproductive_attempts = max(0, attempts - progress - wins)
         family_repeat_cost = (
-            min(0.30, 0.02 * unproductive_attempts)
+            min(1.0, 0.025 * unproductive_attempts)
             if unproductive_attempts else 0.0
         )
         # A current visual route is stronger evidence than generic exploration
-        # debt, so preserve most of its priority while still exposing the cost.
+        # debt, so retain most of its priority while still exposing the cost.
         if route_match:
-            family_repeat_cost *= 0.25
+            family_repeat_cost *= 0.10
         if family_repeat_cost:
             evidence.append(
                 "episode-wide action-family repetition penalty "
