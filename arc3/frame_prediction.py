@@ -78,6 +78,9 @@ def _motion(frames: list[Grid]) -> Grid:
     # value as background and avoid moving it as a whole-grid object.
     counts = Counter(v for row in current for v in row)
     background = counts.most_common(1)[0][0] if counts else None
+    moves = []
+    source_cells = set()
+    destination_counts = Counter()
     for value, (x, y) in curr_pos.items():
         if value == background or value not in prev_pos:
             continue
@@ -85,8 +88,21 @@ def _motion(frames: list[Grid]) -> Grid:
         dx, dy = x - px, y - py
         nx, ny = x + dx, y + dy
         if (dx or dy) and 0 <= ny < height and 0 <= nx < len(output[ny]):
-            output[y][x] = background
-            output[ny][nx] = value
+            moves.append((value, x, y, nx, ny))
+            source_cells.add((x, y))
+            destination_counts[(nx, ny)] += 1
+
+    # Resolve every relocation against the same snapshot. A destination may
+    # be occupied only when that cell is also vacated by a valid moving object.
+    valid_moves = [
+        move for move in moves
+        if destination_counts[(move[3], move[4])] == 1
+        and (current[move[4]][move[3]] == background or (move[3], move[4]) in source_cells)
+    ]
+    for _, x, y, _, _ in valid_moves:
+        output[y][x] = background
+    for value, _, _, nx, ny in valid_moves:
+        output[ny][nx] = value
     return output
 
 
