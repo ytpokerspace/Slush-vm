@@ -28,6 +28,12 @@ def action_name(action: Any) -> str:
 
 
 def action_signature(action: Any) -> str:
+    """Identify the environment action, excluding ephemeral policy-ranking metadata."""
+    if isinstance(action, dict):
+        action = {
+            key: value for key, value in action.items()
+            if key not in {"score", "priority", "strategy_prior", "mcts_score", "diagnostics"}
+        }
     return canonical_json(action)
 
 
@@ -234,7 +240,7 @@ class WorldModel:
 
     def predict_exact(self, observation: Any, action: Any) -> str | None:
         """Return a next-state signature only for an exactly observed state/action pair."""
-        key = canonical_json([state_signature(observation), action_signature(action)])
+        key = self._edge_key(state_signature(observation), action)
         return self.exact_transitions.get(key)
 
     def snapshot(self) -> dict[str, Any]:
