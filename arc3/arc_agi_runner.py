@@ -1,7 +1,7 @@
-"""Experimental runner for the official ARC-AGI-3 Python toolkit.
+"""Experimental ARC-AGI-3 runner with strategy synthesis and shallow MCTS.
 
-Install the official toolkit separately (pip install arc-agi). This runner uses a
-deterministic exploratory policy; it does not claim strong or benchmark-level play.
+Install the official toolkit separately (pip install arc-agi). Search is bounded
+and uses only observed transitions; it does not claim benchmark-level play.
 """
 from __future__ import annotations
 
@@ -200,6 +200,8 @@ def main() -> int:
     parser.add_argument("--game-id", default="ls20", help="ARC-AGI-3 game id (default: ls20)")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--max-actions", type=int, default=100)
+    parser.add_argument("--mcts-depth", type=int, default=3, help="Shallow planning depth (default: 3)")
+    parser.add_argument("--mcts-simulations", type=int, default=32, help="MCTS simulations per decision (default: 32)")
     parser.add_argument("--click-x", type=int, default=32, help="Center/fallback x coordinate")
     parser.add_argument("--click-y", type=int, default=32, help="Center/fallback y coordinate")
     parser.add_argument("--click-strategy", choices=("foreground", "scan", "center"), default="foreground")
@@ -210,6 +212,10 @@ def main() -> int:
 
     if args.max_actions < 1:
         parser.error("--max-actions must be at least 1")
+    if not (1 <= args.mcts_depth <= 6):
+        parser.error("--mcts-depth must be between 1 and 6")
+    if not (1 <= args.mcts_simulations <= 512):
+        parser.error("--mcts-simulations must be between 1 and 512")
     if not (0 <= args.click_x <= 63 and 0 <= args.click_y <= 63):
         parser.error("click coordinates must be between 0 and 63")
     if not (1 <= args.max_click_points <= 4096):
@@ -237,7 +243,10 @@ def main() -> int:
     if frame is None:
         parser.exit(2, "Environment did not return an initial observation.\n")
 
-    agent = Arc3CognitiveAgent()
+    agent = Arc3CognitiveAgent(
+        mcts_depth=args.mcts_depth,
+        mcts_simulations=args.mcts_simulations,
+    )
     planning_memory = LevelPlanningMemory()
     history: list[dict[str, Any]] = []
     steps = 0
@@ -328,7 +337,11 @@ def main() -> int:
         "execution_succeeded": runner_exit_code(steps, terminal) == 0,
         "levels_completed": getattr(frame, "levels_completed", None),
         "win_levels": getattr(frame, "win_levels", None),
-        "policy": "UPI-ARC3 cognitive agent: visual heuristics plus evidence-bounded state/action learning and novelty-aware action selection",
+        "policy": "ARC-AGI-3 strategy brainstorming plus shallow MCTS over observed transitions",
+        "search_configuration": {
+            "depth": args.mcts_depth,
+            "simulations_per_decision": args.mcts_simulations,
+        },
         "navigation_steps": navigation_steps,
         "last_navigation": last_navigation,
         "planning_memory": planning_memory.snapshot(),
