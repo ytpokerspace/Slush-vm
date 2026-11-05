@@ -10,7 +10,7 @@ import json
 from enum import Enum
 from typing import Any
 
-from arc3.emoji_solver import Arc3EmojiSolver
+from arc3.cognitive_agent import Arc3CognitiveAgent
 from arc3.level_planner import LevelPlanningMemory
 from arc3.motion_planner import forecast_motion
 from arc3.object_perception import perceive_objects
@@ -237,7 +237,7 @@ def main() -> int:
     if frame is None:
         parser.exit(2, "Environment did not return an initial observation.\n")
 
-    solver = Arc3EmojiSolver()
+    agent = Arc3CognitiveAgent()
     planning_memory = LevelPlanningMemory()
     history: list[dict[str, Any]] = []
     steps = 0
@@ -267,7 +267,7 @@ def main() -> int:
         planning_memory.partitions["motion_forecast"] = last_motion_forecast
         action_records = score_navigation_candidates(action_records, navigation)
         last_navigation = navigation
-        result = solver.choose_action(observation, action_records, history)
+        result = agent.select_action(observation, action_records, navigation)
         if result["action"] is None:
             terminal = "no_legal_actions"
             break
@@ -299,6 +299,7 @@ def main() -> int:
             break
         next_observation = frame_observation(next_frame)
         planning_memory.record_action(selected_record, observation, next_observation)
+        agent.record_transition(selected_record, observation, next_observation)
         previous_observation = observation
         frame = next_frame
         state = getattr(frame, "state", None)
@@ -327,10 +328,11 @@ def main() -> int:
         "execution_succeeded": runner_exit_code(steps, terminal) == 0,
         "levels_completed": getattr(frame, "levels_completed", None),
         "win_levels": getattr(frame, "win_levels", None),
-        "policy": "observation-only visual target heuristic with deterministic exploration fallback",
+        "policy": "UPI-ARC3 cognitive agent: visual heuristics plus evidence-bounded state/action learning and novelty-aware action selection",
         "navigation_steps": navigation_steps,
         "last_navigation": last_navigation,
         "planning_memory": planning_memory.snapshot(),
+        "cognitive_agent": agent.snapshot(),
         "motion_forecast": last_motion_forecast,
         "object_perception": last_object_perception,
         "object_tracks": object_track_state,
