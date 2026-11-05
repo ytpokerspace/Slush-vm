@@ -1,0 +1,238 @@
+{
+  "version": "3.3",
+  "engine_id": "hyper_pipeline_v3",
+  "target": "arc-agi-3",
+  "deployment": "consumer_hardware",
+  "execution_policy": {
+    "budget_usd": 0,
+    "paid_api_calls": false,
+    "cloud_gpu_provisioning": false,
+    "external_network_calls": false,
+    "automatic_training": false,
+    "automatic_live_benchmark": false,
+    "automatic_deployment": false,
+    "automatic_pull_request_merge": false
+  },
+  "model": {
+    "enabled": false,
+    "role": "optional_strategy_advisor",
+    "default_profile": "none",
+    "profiles": {
+      "consumer_local": {
+        "enabled": false,
+        "model_size": "hardware_dependent",
+        "precision": "auto",
+        "quantization": "supported_local_format",
+        "device_map": "auto",
+        "max_context_tokens": 8192
+      },
+      "research_server": {
+        "enabled": false,
+        "model": "meta-llama/Llama-3-70B-Instruct",
+        "precision": "bf16",
+        "quantization": "none",
+        "deployment": "separate_high_memory_profile"
+      }
+    },
+    "inference_constraints": {
+      "external_api": false,
+      "network_required": false,
+      "paid_services": false,
+      "model_calls_required_for_solver": false,
+      "timeout_seconds": 10,
+      "fallback": "native_solver"
+    }
+  },
+  "arc_solver": {
+    "enabled": true,
+    "mode": "interactive_observation_driven",
+    "environment": {
+      "legal_actions_only": true,
+      "record_observations": true,
+      "preserve_terminal_states": true,
+      "reject_invalid_actions": true
+    },
+    "world_model": {
+      "enabled": true,
+      "state_snapshots": true,
+      "observed_transition_graph": true,
+      "bounded_history": true,
+      "unknown_transition_policy": "conservative_leaf",
+      "invented_successors": false
+    },
+    "strategy_studio": {
+      "enabled": true,
+      "generation_rounds": 2,
+      "refinement_passes": 4,
+      "hybridization": true,
+      "rank_candidates": true
+    },
+    "mcts": {
+      "enabled": true,
+      "default_depth": 3,
+      "default_simulations": 32,
+      "exploration_constant": 1.25,
+      "maximum_depth": 6,
+      "maximum_simulations": 512,
+      "prior_source": "strategy_studio",
+      "prior_semantics": "ranking_preference",
+      "unknown_transition": {
+        "simulate": false,
+        "leaf_value": "conservative"
+      },
+      "statistics": {
+        "posterior": "beta_binomial",
+        "prior_alpha": 1,
+        "prior_beta": 1,
+        "confidence_interval": "wilson_95"
+      }
+    },
+    "action_selection": {
+      "require_current_legal_action": true,
+      "reject_unknown_action": true,
+      "record_reasoning": true,
+      "record_alternative_actions": true
+    }
+  },
+  "io_pipeline": {
+    "enabled": true,
+    "source_archive": {
+      "immutable": true,
+      "hash_algorithm": "sha256",
+      "verify_reconstruction": true,
+      "reject_duplicate_source_ids": true
+    },
+    "cascade_compression": {
+      "enabled": true,
+      "strategy": "entropy_pruning",
+      "threshold": 0.85,
+      "preserve_original": true,
+      "preserve_exact_reconstruction": true
+    },
+    "lazy_context_hydration": {
+      "enabled": true,
+      "chunk_size": 512,
+      "chunk_unit": "tokens",
+      "retrieval_backend": "local_vector_index",
+      "retrieval": {
+        "budget_aware": true,
+        "rank_by_relevance": true,
+        "merge_overlapping_chunks": true,
+        "preserve_source_references": true
+      }
+    },
+    "telemetry": {
+      "source_bytes": true,
+      "compressed_bytes": true,
+      "active_context_tokens": true,
+      "retrieved_chunks": true,
+      "reconstruction_hash": true
+    }
+  },
+  "fine_tuning": {
+    "enabled": false,
+    "mode": "lora",
+    "training_data": {
+      "source": "approved_recorded_arc_observations",
+      "require_validation_split": true,
+      "require_deduplication": true,
+      "preserve_training_provenance": true
+    },
+    "hyperparameters": {
+      "rank": 16,
+      "alpha": 32,
+      "dropout": 0.05,
+      "bias": "none"
+    },
+    "optimizer": {
+      "type": "adamw",
+      "learning_rate": 0.0001,
+      "weight_decay": 0.01,
+      "scheduler": "cosine"
+    },
+    "training_dynamics": {
+      "gradient_accumulation_steps": 4,
+      "per_device_train_batch_size": 1,
+      "gradient_checkpointing": true,
+      "mixed_precision": "auto",
+      "max_grad_norm": 1.0
+    },
+    "safeguards": {
+      "require_validation": true,
+      "require_reproducible_seed": true,
+      "export_adapter_separately": true,
+      "compare_against_baseline": true
+    }
+  },
+  "computation_engine": {
+    "backend": "auto",
+    "supported_backends": ["pytorch", "triton_optional"],
+    "compilation": {
+      "torch_compile": false,
+      "mode": "default",
+      "fullgraph": false
+    },
+    "kernels": {
+      "flash_attention": "auto",
+      "gemm_implementation": "auto",
+      "rope_kernel": "auto"
+    },
+    "memory": {
+      "reserve_system_memory": true,
+      "gpu_memory_fraction": 0.7,
+      "dynamic_batching": false,
+      "max_concurrent_model_calls": 1
+    },
+    "inference": {
+      "speculative_decoding": {"enabled": false},
+      "prefix_caching": {"enabled": false},
+      "kv_cache": {
+        "enabled": "when_supported",
+        "dtype": "auto",
+        "max_context_tokens": 8192
+      }
+    }
+  },
+  "evaluation": {
+    "enabled": true,
+    "execution_mode": "offline_first",
+    "baseline": {
+      "required": true,
+      "preserve_previous_results": true
+    },
+    "tests": {
+      "unit_tests": true,
+      "integration_tests": true,
+      "recorded_observation_replay": true,
+      "world_model_integrity": true,
+      "legal_action_validation": true,
+      "mcts_reproducibility": true,
+      "compression_reconstruction": true
+    },
+    "measurements": [
+      "tasks_attempted",
+      "tasks_completed",
+      "terminal_wins",
+      "actions_per_episode",
+      "repeated_actions",
+      "invalid_actions",
+      "search_nodes",
+      "decision_latency",
+      "memory_usage",
+      "context_tokens",
+      "compression_ratio",
+      "reconstruction_fidelity"
+    ],
+    "reporting": {
+      "separate_measurements_from_estimates": true,
+      "record_seed": true,
+      "record_configuration_hash": true,
+      "preserve_raw_logs": true,
+      "preserve_json_results": true
+    },
+    "live_benchmark": {
+      "enabled": false,
+      "require_explicit_authorization": true
+    }
+  }
+}
