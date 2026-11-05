@@ -95,7 +95,7 @@ def brainstorm_action_priors(
         noop_rate = (int(stats.get("unchanged", 0)) / attempts) if attempts else 0.0
         row["contradiction_penalty"] = 0.30 * noop_rate if attempts >= 2 else 0.0
         # Pass 4 — resource cost: discourage repeating an already-tested action here.
-        row["repeat_cost"] = 0.20 if row["signature"] in attempted else 0.0
+        row["repeat_cost"] = 0.75 if row["signature"] in attempted else 0.0
         row["score"] += (
             0.10 * row["evidence_strength"]
             - row["contradiction_penalty"]
