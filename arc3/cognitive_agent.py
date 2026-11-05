@@ -78,7 +78,9 @@ class Arc3CognitiveAgent:
             already_tried = key in attempted
 
             # These are transparent heuristic utilities, not probabilities.
-            novelty_bonus = 8.0 if not already_tried else -12.0
+            # Once an action has already been tried in this exact unchanged state,
+            # prefer testing another legal action before repeating it.
+            novelty_bonus = 8.0 if not already_tried else -120.0
             family_exploration_bonus = 3.0 / math.sqrt(1.0 + tries)
             no_change_penalty = (
                 5.0 * unchanged / tries if tries >= 2 else 0.0
