@@ -48,7 +48,7 @@ jobs:
           grep -q "Missing optional dependency:" runner-output.txt
 
   live-benchmark:
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_live == true }}
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_live == true) || github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
