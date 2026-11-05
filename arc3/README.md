@@ -103,6 +103,19 @@ pushes do not unexpectedly consume live benchmark time. A failed environment
 connection is reported as a CI failure; a completed run can succeed even if the
 baseline did not win.
 
+## UPI-ARC3 cognitive agent (experimental)
+
+The runner now uses `arc3/cognitive_agent.py` as its action-selection controller.
+It combines:
+
+- `world_model.py`: hashes observed states, records state/action transitions, and tracks visible changes, repeated outcomes, explicit level progress, and terminal wins.
+- `hypothesis_engine.py`: keeps explicit environment facts separate from heuristic goal candidates and action-effect hypotheses.
+- `cognitive_agent.py`: ranks only the legal action records supplied by the environment, balances the visual navigation score with action novelty, and penalizes repeating an action in an unchanged state.
+
+The controller learns from each observed action/result pair during an episode. Exact transition lookups are limited to state/action pairs that were actually observed; there is no fabricated simulator for unknown states. Scores are heuristic utilities, not calibrated probabilities. A changed frame is not automatically treated as progress, and a visual target candidate is not treated as a verified goal.
+
+The runner JSON now includes a `cognitive_agent` snapshot with state features, selected-action factors, recent transition evidence, and the hypothesis ledger. The new tests cover state hashing, exact transition lookup, explicit progress signals, legal-action selection, no-op avoidance, and evidence labeling.
+
 ## Integration boundary and next research steps
 
 The visual heuristic is an early hypothesis-driven baseline, not a general solution:
