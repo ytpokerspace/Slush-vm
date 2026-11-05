@@ -1,13 +1,13 @@
 name: ARC-AGI-3 Live Benchmark
 
 on:
-  push:
-    branches:
-      - feat/arc-agi-3-emoji-solver
-    paths:
-      - ".github/workflows/arc3-live-smoke.yml"
   workflow_dispatch:
     inputs:
+      run_live:
+        description: "Explicitly enable live ARC-AGI-3 episodes. Leave false to avoid running the game."
+        required: true
+        default: false
+        type: boolean
       game_id:
         description: "ARC-AGI-3 game id"
         required: true
@@ -30,7 +30,8 @@ permissions:
 jobs:
   live-benchmark:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    if: ${{ inputs.run_live == true }}
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -46,6 +47,26 @@ jobs:
           MAX_ACTIONS: ${{ inputs.max_actions || '64' }}
           SEEDS: ${{ inputs.seeds || '0,1,2' }}
         run: |
+          set -e
+          if [[ "$GAME_ID" == *","* ]]; then
+            echo "Provide one game ID per run."
+            exit 2
+          fi
+          if ! [[ "$MAX_ACTIONS" =~ ^[0-9]+$ ]] || (( MAX_ACTIONS < 1 || MAX_ACTIONS > 256 )); then
+            echo "max_actions must be an integer from 1 to 256."
+            exit 2
+          fi
+          IFS=',' read -ra SEED_LIST <<< "$SEEDS"
+          if (( ${#SEED_LIST[@]} < 1 || ${#SEED_LIST[@]} > 4 )); then
+            echo "Provide between one and four seeds per run."
+            exit 2
+          fi
+          for seed in "${SEED_LIST[@]}"; do
+            if ! [[ "$seed" =~ ^-?[0-9]+$ ]]; then
+              echo "Seeds must be comma-separated integers."
+              exit 2
+            fi
+          done
           set +e
           python -m arc3.benchmark \
             --games "$GAME_ID" \
