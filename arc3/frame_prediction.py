@@ -92,13 +92,23 @@ def _motion(frames: list[Grid]) -> Grid:
             source_cells.add((x, y))
             destination_counts[(nx, ny)] += 1
 
-    # Resolve every relocation against the same snapshot. A destination may
-    # be occupied only when that cell is also vacated by a valid moving object.
+    # Resolve every relocation against the same snapshot. Remove ambiguous
+    # destinations first, then repeatedly remove moves that would enter a
+    # source cell whose own move was rejected.
     valid_moves = [
         move for move in moves
         if destination_counts[(move[3], move[4])] == 1
-        and (current[move[4]][move[3]] == background or (move[3], move[4]) in source_cells)
     ]
+    while True:
+        valid_sources = {(move[1], move[2]) for move in valid_moves}
+        filtered = [
+            move for move in valid_moves
+            if current[move[4]][move[3]] == background
+            or (move[3], move[4]) in valid_sources
+        ]
+        if len(filtered) == len(valid_moves):
+            break
+        valid_moves = filtered
     for _, x, y, _, _ in valid_moves:
         output[y][x] = background
     for value, _, _, nx, ny in valid_moves:
