@@ -131,7 +131,7 @@ def main() -> int:
     report = summarize_results(results)
     report.update({
         "created_at": datetime.now(timezone.utc).isoformat(),
-        "policy": "visual target heuristic with deterministic exploration fallback",
+        "policy": "UPI-ARC3 cognitive agent with evidence-bounded state/action learning",
         "click_strategy": args.click_strategy,
         "max_actions_per_run": args.max_actions,
         "games": games,
