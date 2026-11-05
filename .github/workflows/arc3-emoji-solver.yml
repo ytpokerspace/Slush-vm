@@ -48,7 +48,7 @@ jobs:
           grep -q "Missing optional dependency:" runner-output.txt
 
   live-benchmark:
-    # Live benchmark is opt-in; ordinary PRs and pushes remain offline.
+    # PRs run offline checks only; live benchmark requires explicit opt-in.
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_live == true }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
