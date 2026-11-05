@@ -7,7 +7,6 @@ on:
       - "tests/test_arc3_*.py"
       - ".github/workflows/arc3-emoji-solver.yml"
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - "arc3/**"
       - "tests/test_arc3_*.py"
@@ -49,8 +48,8 @@ jobs:
           grep -q "Missing optional dependency:" runner-output.txt
 
   live-benchmark:
-    # One bounded live validation run for PR #7; other PRs stay offline.
-    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_live == true) || (github.event_name == 'pull_request' && github.event.action == 'ready_for_review' && github.event.pull_request.number == 7) }}
+    # PRs run offline checks only; live benchmark requires explicit opt-in.
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_live == true }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
