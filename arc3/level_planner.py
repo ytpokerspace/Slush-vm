@@ -5,6 +5,7 @@ from hypotheses/plans and never claims a level is complete without an explicit s
 """
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -103,10 +104,7 @@ class LevelPlanningMemory:
 
     def snapshot(self) -> dict[str, Any]:
         """Return a detached JSON-compatible snapshot for logging/checkpointing."""
-        return {
-            key: value.copy() if isinstance(value, dict) else list(value)
-            for key, value in self.partitions.items()
-        }
+        return deepcopy(self.partitions)
 
     @staticmethod
     def _shape(value: Any) -> list[Any]:
