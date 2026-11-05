@@ -108,7 +108,10 @@ class CognitiveAgentTests(unittest.TestCase):
         result = Arc3CognitiveAgent().select_action(
             {"room": 1}, [{"name": "MOVE", "score": 4}]
         )
-        self.assertIn("not a calibrated probability", result["diagnostics"]["score_semantics"])
+        self.assertIn(
+            "not a calibrated probability",
+            result["diagnostics"]["mcts"]["probability_semantics"],
+        )
 
 
 if __name__ == "__main__":
