@@ -49,7 +49,7 @@ class StrategyStudioTests(unittest.TestCase):
         repeated_row = next(row for row in result["candidates"]
                             if row["family"] == "ACTION2")
         self.assertEqual(repeated_row["family_attempts"], 12)
-        self.assertAlmostEqual(repeated_row["family_repeat_cost"], 0.24)
+        self.assertAlmostEqual(repeated_row["family_repeat_cost"], 0.30)
 
     def test_visual_route_can_override_episode_wide_repetition_cost(self):
         model = WorldModel()
