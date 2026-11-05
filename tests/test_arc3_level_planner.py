@@ -44,6 +44,19 @@ class LevelPlanningMemoryTests(unittest.TestCase):
         self.assertEqual(snapshot["active_plan"], [])
         self.assertTrue(snapshot["uncertainties"])
 
+    def test_snapshot_is_deeply_detached_from_internal_state(self):
+        memory = LevelPlanningMemory()
+        snapshot = memory.update_observation(
+            {"frame": [[[0, 1], [2, 3]]]},
+            {"action": "ACTION1", "target_center": [1, 0], "step_size": 2},
+        )
+        snapshot["active_plan"][0]["action"] = "CORRUPTED"
+        snapshot["level_progress"]["levels_completed"] = 99
+        snapshot["scene_state"]["frame_shape"][0] = 999
+        self.assertEqual(memory.partitions["active_plan"][0]["action"], "ACTION1")
+        self.assertEqual(memory.partitions["level_progress"]["levels_completed"], 0)
+        self.assertEqual(memory.partitions["scene_state"]["frame_shape"], [1, 2, 2])
+
     def test_action_outcome_records_only_observed_change(self):
         memory = LevelPlanningMemory()
         snapshot = memory.record_action("ACTION1", {"grid": [[0]]}, {"grid": [[1]]})
