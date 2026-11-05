@@ -103,18 +103,45 @@ pushes do not unexpectedly consume live benchmark time. A failed environment
 connection is reported as a CI failure; a completed run can succeed even if the
 baseline did not win.
 
-## UPI-ARC3 cognitive agent (experimental)
+## Quantum Brainstorming Studio + shallow MCTS (experimental)
 
-The runner now uses `arc3/cognitive_agent.py` as its action-selection controller.
-It combines:
+The ARC-AGI-3 controller applies a classical, testable adaptation of the workspace's
+Quantum Brainstorming Studio principles:
 
-- `world_model.py`: hashes observed states, records state/action transitions, and tracks visible changes, repeated outcomes, explicit level progress, and terminal wins.
-- `hypothesis_engine.py`: keeps explicit environment facts separate from heuristic goal candidates and action-effect hypotheses.
-- `cognitive_agent.py`: ranks only the legal action records supplied by the environment, balances the visual navigation score with action novelty, and penalizes repeating an action in an unchanged state.
+- **Two idea-generation rounds:** independent candidate strategies, followed by
+  compatible hybrids (visual route + fresh experiment; observed progress + current
+  state check).
+- **Four refinement passes:** legal-action feasibility, evidence strength,
+  contradictory/no-op evidence, and repeated-action cost.
+- Candidate scores are normalized into MCTS exploration priors. These priors are
+  strategy preferences, **not probabilities of winning**.
 
-The controller learns from each observed action/result pair during an episode. Exact transition lookups are limited to state/action pairs that were actually observed; there is no fabricated simulator for unknown states. Scores are heuristic utilities, not calibrated probabilities. A changed frame is not automatically treated as progress, and a visual target candidate is not treated as a verified goal.
+`arc3/shallow_mcts.py` performs bounded search over the episode's observed
+state-transition graph. Defaults are depth 3 and 32 simulations per decision.
+Configure them with `--mcts-depth` (1–6) and `--mcts-simulations` (1–512).
+The search samples only successor states observed for the exact state/action pair.
+When a transition is unknown, the rollout stops at a conservative leaf estimate;
+it never invents a next state or calls the live environment during simulations.
 
-The runner JSON now includes a `cognitive_agent` snapshot with state features, selected-action factors, recent transition evidence, and the hypothesis ledger. The new tests cover state hashing, exact transition lookup, explicit progress signals, legal-action selection, no-op avoidance, and evidence labeling.
+Action statistics include a Beta(1,1) posterior mean for **observed explicit level
+progress or terminal win**, plus an empirical success rate and Wilson 95% interval.
+This is an evidence summary, not a calibrated probability of eventual game
+completion. Progress and terminal wins remain separately recorded in the world
+model. A changed frame alone is not treated as success.
+
+`arc3/strategy_studio.py` implements the two generation rounds and four refinement
+passes. `arc3/world_model.py` stores bounded state snapshots, legal actions supplied
+by the SDK, and empirical transition counts. `arc3/cognitive_agent.py` connects
+the Studio, world model, hypothesis ledger, and MCTS. Runner JSON exposes candidate
+strategies, priors, search depth, simulations, posterior estimates, confidence
+intervals, and the model boundary.
+
+Focused tests:
+```sh
+python -m unittest discover -s tests -p 'test_arc3_*.py' -v
+```
+
+This is an experimental decision policy, not a claim of ARC-AGI-3 benchmark success.
 
 ## Integration boundary and next research steps
 
