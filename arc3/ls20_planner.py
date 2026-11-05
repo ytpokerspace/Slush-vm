@@ -233,10 +233,9 @@ def infer_ls20_plan(observation: Any) -> dict[str, Any] | None:
         if 2 <= comp["area"] <= 8 and comp["colors"] == {0, 1}
         and 18 <= comp["center"][1] < 45
     ]
-    if not players or not switches:
+    if not players:
         return None
     player = max(players, key=lambda comp: comp["area"])
-    switch = min(switches, key=lambda comp: comp["area"])
 
     door_pixels = [
         (x, y)
@@ -268,6 +267,17 @@ def infer_ls20_plan(observation: Any) -> dict[str, Any] | None:
         return None
 
     if turns:
+        if not switches:
+            return {
+                "status": "rotation_tile_not_separately_visible",
+                "stage": "visit_rotation_switch",
+                "key_rotation_steps": turns,
+                "key_pattern": key_pattern,
+                "door_pattern": door_pattern,
+                "player_center": list(player["center"]),
+                "navigation": None,
+            }
+        switch = min(switches, key=lambda comp: comp["area"])
         stage = "visit_rotation_switch"
         goal = switch["center"]
         goal_colors = switch["colors"]
