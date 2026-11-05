@@ -21,6 +21,14 @@ class FramePredictionTests(unittest.TestCase):
         result = predict_next_frame(history, method="motion")
         self.assertEqual(result["prediction"][1], [0, 0, 0, 2])
 
+    def test_motion_relocates_multiple_values_simultaneously(self):
+        history = [
+            [[1, 2, 0, 0]],
+            [[0, 1, 2, 0]],
+        ]
+        result = predict_next_frame(history, method="motion")
+        self.assertEqual(result["prediction"], [[0, 0, 1, 2]])
+
     def test_top_candidates_are_empirical_frequencies(self):
         history = [[[0]], [[1]], [[1]]]
         cell = predict_next_frame(history)["cells"][0][0]
