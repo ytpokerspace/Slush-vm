@@ -50,7 +50,7 @@ jobs:
   live-benchmark:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_live == true }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -61,7 +61,7 @@ jobs:
       - name: Run bounded live episode and preserve report
         run: |
           set +e
-          python -m arc3.benchmark --games ls20 --seeds 0 --max-actions 12 --max-click-points 8 --run-timeout 120 --output arc3-benchmark.json > arc3-benchmark.log 2>&1
+          python -m arc3.benchmark --games ls20 --seeds 0 --max-actions 256 --max-click-points 32 --run-timeout 600 --output arc3-benchmark.json > arc3-benchmark.log 2>&1
           status=$?
           cat arc3-benchmark.log
           if [ ! -f arc3-benchmark.json ]; then
