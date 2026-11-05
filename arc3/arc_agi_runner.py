@@ -17,6 +17,7 @@ from arc3.config_validation import DEFAULT_CONFIG, load_config, validate_solver_
 
 from arc3.cognitive_agent import Arc3CognitiveAgent
 from arc3.level_planner import LevelPlanningMemory
+from arc3.ls20_planner import infer_ls20_plan
 from arc3.motion_planner import forecast_motion
 from arc3.object_perception import perceive_objects
 from arc3.object_tracker import update_object_tracks
@@ -279,6 +280,7 @@ def main() -> int:
     episode_started = time.perf_counter()
     navigation_steps = 0
     last_navigation = None
+    last_ls20_plan = None
     previous_observation = None
     last_motion_forecast = None
     last_object_perception = None
@@ -291,7 +293,12 @@ def main() -> int:
             legal, observation, args.click_strategy, args.click_x, args.click_y,
             args.max_click_points, previous_observation,
         )
-        navigation = infer_navigation(observation)
+        ls20_plan = infer_ls20_plan(observation) if args.game_id.lower() == "ls20" else None
+        if ls20_plan is not None:
+            navigation = ls20_plan.get("navigation")
+        else:
+            navigation = infer_navigation(observation)
+        last_ls20_plan = ls20_plan
         last_object_perception = perceive_objects(observation)
         object_track_state = update_object_tracks(object_track_state, last_object_perception)
         planning_memory.partitions["object_perception"] = last_object_perception
@@ -335,6 +342,7 @@ def main() -> int:
             ],
             "action": selected_record,
             "navigation": navigation,
+            "ls20_plan": ls20_plan,
         })
         action_data = selected_record.get("data") if selected.is_complex() else None
         if selected.is_complex() and not isinstance(action_data, dict):
@@ -392,7 +400,7 @@ def main() -> int:
         "execution_succeeded": runner_exit_code(steps, terminal) == 0,
         "levels_completed": getattr(frame, "levels_completed", None),
         "win_levels": getattr(frame, "win_levels", None),
-        "policy": "ARC-AGI-3 strategy brainstorming plus shallow MCTS over observed transitions",
+        "policy": "ARC-AGI-3 observation-based planning plus strategy brainstorming and shallow MCTS",
         "search_configuration": {
             "depth": args.mcts_depth,
             "simulations_per_decision": args.mcts_simulations,
@@ -401,6 +409,7 @@ def main() -> int:
         },
         "navigation_steps": navigation_steps,
         "last_navigation": last_navigation,
+        "last_ls20_plan": last_ls20_plan,
         "planning_memory": planning_memory.snapshot(),
         "cognitive_agent": agent.snapshot(),
         "motion_forecast": last_motion_forecast,
