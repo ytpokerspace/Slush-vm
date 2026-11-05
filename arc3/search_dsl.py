@@ -178,6 +178,15 @@ def search(
     shortlist = [action for _, action in first_candidates[:min(cfg.top_k, cfg.max_children)]]
     pruned += max(0, len(first_candidates) - len(shortlist))
     if not shortlist:
+        # Beam search may have consumed the complete node budget while still
+        # finding a valid multi-step prefix. Preserve that usable first action
+        # instead of discarding the beam result as "no_candidates".
+        beam_plan = ranked[0][2]
+        if beam_plan:
+            return SearchResult(
+                beam_plan[0], ranked[0][0], beam_plan,
+                created, pruned, 0, "beam_fallback",
+            )
         return SearchResult(None, evaluate(initial), (), created, pruned, 0, "no_candidates")
     root = Node(initial, children=[], untried=shortlist.copy())
     rng = random.Random(cfg.seed)
