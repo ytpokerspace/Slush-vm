@@ -80,7 +80,33 @@ def candidate_click_points(
     if strategy == "center":
         return [{"x": center_x, "y": center_y}]
     if strategy == "scan":
-        return [{"x": x, "y": y} for y in range(4, 64, 8) for x in range(4, 64, 8)][:max_points]
+        lattice = [(x, y) for y in range(4, 64, 8) for x in range(4, 64, 8)]
+        limit = min(max(0, int(max_points)), len(lattice))
+        if limit == 0:
+            return []
+        # Farthest-point sampling spreads a small budget across the entire
+        # 8x8 playfield instead of truncating the row-major list at the top.
+        center_index = min(
+            range(len(lattice)),
+            key=lambda i: (
+                (lattice[i][0] - 31.5) ** 2 + (lattice[i][1] - 31.5) ** 2,
+                i,
+            ),
+        )
+        selected = [lattice.pop(center_index)]
+        while lattice and len(selected) < limit:
+            next_index = max(
+                range(len(lattice)),
+                key=lambda i: (
+                    min(
+                        (lattice[i][0] - sx) ** 2 + (lattice[i][1] - sy) ** 2
+                        for sx, sy in selected
+                    ),
+                    -i,
+                ),
+            )
+            selected.append(lattice.pop(next_index))
+        return [{"x": x, "y": y} for x, y in selected]
     if strategy != "foreground":
         raise ValueError(f"unsupported click strategy: {strategy}")
 
