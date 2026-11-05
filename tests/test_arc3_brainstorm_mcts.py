@@ -29,6 +29,41 @@ class StrategyStudioTests(unittest.TestCase):
         self.assertGreater(result["priors"][action_signature(actions[1])],
                            result["priors"][action_signature(actions[0])])
 
+    def test_episode_wide_unproductive_repetition_reduces_action_family_prior(self):
+        model = WorldModel()
+        repeated = {"name": "ACTION2"}
+        for index in range(12):
+            model.record_transition(
+                repeated,
+                {"state": index, "__arc3_levels_completed": 0},
+                {"state": index + 1, "__arc3_levels_completed": 0},
+            )
+        actions = [
+            {"name": "ACTION1"}, {"name": "ACTION2"},
+            {"name": "ACTION3"}, {"name": "ACTION4"},
+        ]
+        result = brainstorm_action_priors(actions, None, model, set())
+        priors = result["priors"]
+        self.assertLess(priors[action_signature(repeated)],
+                        priors[action_signature({"name": "ACTION3"})])
+        repeated_row = next(row for row in result["candidates"]
+                            if row["family"] == "ACTION2")
+        self.assertEqual(repeated_row["family_attempts"], 12)
+        self.assertAlmostEqual(repeated_row["family_repeat_cost"], 0.30)
+
+    def test_visual_route_can_override_episode_wide_repetition_cost(self):
+        model = WorldModel()
+        repeated = {"name": "ACTION2"}
+        for index in range(20):
+            model.record_transition(
+                repeated,
+                {"state": index, "__arc3_levels_completed": 0},
+                {"state": index + 1, "__arc3_levels_completed": 0},
+            )
+        actions = [{"name": "ACTION1"}, repeated, {"name": "ACTION3"}]
+        result = brainstorm_action_priors(actions, {"action": "ACTION2"}, model, set())
+        self.assertEqual(result["candidates"][0]["family"], "ACTION2")
+
 
 class ShallowMCTSTests(unittest.TestCase):
     def test_only_uses_observed_transitions_and_legal_actions(self):
