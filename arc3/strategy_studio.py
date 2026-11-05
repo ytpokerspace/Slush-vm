@@ -62,10 +62,28 @@ def brainstorm_action_priors(
         if attempts >= 2 and unchanged / attempts >= 0.75:
             score -= 0.25
             evidence.append("action family frequently produced unchanged observations")
+
+        # State-local novelty alone failed on the live trace: every move created
+        # a new state, so the same action looked "untried" on every turn. Add a
+        # bounded action-family exploration debt across the whole episode. Only
+        # verified level progress or a terminal win exempts an action family.
+        unproductive_attempts = max(0, attempts - progress - wins)
+        family_repeat_cost = (
+            min(0.30, 0.02 * unproductive_attempts)
+            if unproductive_attempts else 0.0
+        )
+        if family_repeat_cost:
+            evidence.append(
+                "episode-wide action-family repetition penalty "
+                f"({unproductive_attempts} attempts without verified progress)"
+            )
+
         rows.append({
             "index": index, "action": action, "signature": signature,
             "family": family, "score": score, "evidence": evidence,
             "generation": "independent",
+            "family_attempts": attempts,
+            "family_repeat_cost": family_repeat_cost,
         })
 
     # Round 2: hybridize complementary ideas without inventing new legal actions.
@@ -100,6 +118,7 @@ def brainstorm_action_priors(
             0.10 * row["evidence_strength"]
             - row["contradiction_penalty"]
             - row["repeat_cost"]
+            - row["family_repeat_cost"]
         )
 
     # Convert ranking scores into normalized search priors. These are not success
