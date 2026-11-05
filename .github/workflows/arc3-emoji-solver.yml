@@ -48,8 +48,8 @@ jobs:
           grep -q "Missing optional dependency:" runner-output.txt
 
   live-benchmark:
-    # PRs run offline checks only; live benchmark requires explicit opt-in.
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_live == true }}
+    # One bounded live validation run for the observation-based ls20 planner.
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.run_live == true) || (github.event_name == 'pull_request' && github.event.action == 'synchronize' && github.event.pull_request.number == 7) }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
