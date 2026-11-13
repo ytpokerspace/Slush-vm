@@ -209,13 +209,20 @@ def main() -> int:
         "games": games,
         "seeds": seeds,
         "note": "Exploration metrics only; not a claim of benchmark-level solving.",
-    })
+    }
     Path(args.output).write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    aggregate_summary = {
+        key: value for key, value in report["aggregate_all_policy_runs"].items()
+        if key != "results"
+    }
     print(json.dumps({
-        "summary": {k: v for k, v in report.items() if k != "results"},
+        "summary": {
+            "aggregate_all_policy_runs": aggregate_summary,
+            "comparison": report["comparison"]["paired_summary"],
+        },
         "output": args.output,
     }, ensure_ascii=False))
-    return 1 if report["runs_failed"] else 0
+    return 1 if report["aggregate_all_policy_runs"]["runs_failed"] else 0
 
 
 if __name__ == "__main__":
