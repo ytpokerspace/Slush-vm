@@ -11,6 +11,7 @@ from enum import Enum
 from typing import Any
 
 from arc3.cognitive_agent import Arc3CognitiveAgent
+from arc3.glyph_agent import GlyphArc3Agent
 from arc3.level_planner import LevelPlanningMemory
 from arc3.motion_planner import forecast_motion
 from arc3.object_perception import perceive_objects
@@ -202,6 +203,7 @@ def main() -> int:
     parser.add_argument("--max-actions", type=int, default=100)
     parser.add_argument("--mcts-depth", type=int, default=3, help="Shallow planning depth (default: 3)")
     parser.add_argument("--mcts-simulations", type=int, default=32, help="MCTS simulations per decision (default: 32)")
+    parser.add_argument("--policy", choices=("legacy", "glyph"), default="legacy", help="ARC3 policy; glyph enables emoji DSL and belief MCTS")
     parser.add_argument("--click-x", type=int, default=32, help="Center/fallback x coordinate")
     parser.add_argument("--click-y", type=int, default=32, help="Center/fallback y coordinate")
     parser.add_argument("--click-strategy", choices=("foreground", "scan", "center"), default="foreground")
@@ -243,10 +245,13 @@ def main() -> int:
     if frame is None:
         parser.exit(2, "Environment did not return an initial observation.\n")
 
-    agent = Arc3CognitiveAgent(
-        mcts_depth=args.mcts_depth,
-        mcts_simulations=args.mcts_simulations,
-    )
+    if args.policy == "glyph":
+        agent = GlyphArc3Agent(simulations=args.mcts_simulations, depth=args.mcts_depth)
+    else:
+        agent = Arc3CognitiveAgent(
+            mcts_depth=args.mcts_depth,
+            mcts_simulations=args.mcts_simulations,
+        )
     planning_memory = LevelPlanningMemory()
     history: list[dict[str, Any]] = []
     steps = 0
@@ -337,7 +342,8 @@ def main() -> int:
         "execution_succeeded": runner_exit_code(steps, terminal) == 0,
         "levels_completed": getattr(frame, "levels_completed", None),
         "win_levels": getattr(frame, "win_levels", None),
-        "policy": "ARC-AGI-3 strategy brainstorming plus shallow MCTS over observed transitions",
+        "policy": ("emoji DSL + strategy priors + belief MCTS" if args.policy == "glyph" else "strategy brainstorming + shallow MCTS over observed transitions"),
+        "policy_mode": args.policy,
         "search_configuration": {
             "depth": args.mcts_depth,
             "simulations_per_decision": args.mcts_simulations,
