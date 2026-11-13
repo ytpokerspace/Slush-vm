@@ -43,6 +43,7 @@ class GlyphGameplayMemoryTests(unittest.TestCase):
         self.assertIn("🗂️", memory.rollups[0]["glyph"])
         self.assertEqual(memory.rollups[0]["first_step"], 1)
         self.assertEqual(memory.rollups[0]["last_step"], 4)
+        self.assertEqual(memory.rollups[0]["action_outcomes"]["ACTION1"]["state_changed_unclassified"], 4)
 
     def test_verified_progress_and_no_change_are_distinguished(self):
         memory = GlyphGameplayMemory()
