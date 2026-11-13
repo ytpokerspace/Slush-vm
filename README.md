@@ -51,6 +51,8 @@ python -m arc3.arc_agi_runner --policy glyph --game-id ls20 --mcts-depth 4 --mct
 
 See [ARC3_GLYPH_ENGINE.md](docs/ARC3_GLYPH_ENGINE.md) for the glyph vocabulary, research mapping, limitations, and test command. The default runner policy remains `legacy` until public-game comparisons show that the new policy is reliable. Predicted outcomes are not counted as observed transitions; the new policy has not yet been benchmark-validated.
 
+The extended **EGP-ARC3 (Emoji Glyph Protocol)** defines typed instructions for orientation, tracking, evidence-gated physics, attention, empirical probabilities, verified rewards, risk, beam search, shallow MCTS, parallel evaluation, verification, and hierarchical memory. Its compiler resolves typed defaults and its dynamic renderer emits a context-specific glyph stream plus structured fields and a SHA-256 context digest. See [EGP_ARC3_PROTOCOL.md](docs/EGP_ARC3_PROTOCOL.md). The runner-side [glyph gameplay memory](docs/ARC3_GLYPH_MEMORY.md) preserves event records, spatial manifests, action/outcome correlations, chunk summaries, and rollups; glyphs remain indexes rather than lossless source data.
+
 ## ARC-AGI-3 object value planning (experimental)
 
 The ARC solver branch includes `arc3/object_value_planner.py`, a small heuristic scaffold for separating per-object decision estimates from global objective arbitration. It scores goal value, estimated success probability, information value, risk, and action cost; it can recommend pursuing, preparing for, or deferring an objective. Deferred objectives remain in the result so they can be reconsidered after new observations.
