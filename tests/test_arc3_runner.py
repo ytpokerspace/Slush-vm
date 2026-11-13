@@ -29,16 +29,17 @@ class RunnerFailureTests(unittest.TestCase):
         self.assertEqual(runner_exit_code(0, "no_legal_actions"), 1)
 
     def test_foreground_clicks_exclude_dominant_background_colors(self):
-        frame = [
-            [5, 5, 5, 5],
-            [5, 9, 9, 9],
-            [5, 4, 4, 4],
-            [5, 8, 2, 12],
-        ]
+        frame = [[5] * 16 for _ in range(16)]
+        for x in range(2, 12):
+            frame[2][x] = 9
+            frame[3][x] = 4
+        frame[15][1] = 8
+        frame[15][2] = 2
+        frame[15][3] = 12
         points = candidate_click_points({"frame": frame}, max_points=16)
         self.assertEqual(
             points,
-            [{"x": 1, "y": 3}, {"x": 2, "y": 3}, {"x": 3, "y": 3}],
+            [{"x": 1, "y": 15}, {"x": 2, "y": 15}, {"x": 3, "y": 15}],
         )
 
     def test_navigation_target_is_included_even_when_it_is_background(self):
