@@ -3,6 +3,7 @@ import unittest
 from arc3.game_dynamics_memory import GameDynamicsMemory
 from arc3.world_model import action_signature
 from arc3.transition_learner import TransitionLearner
+from arc3.world_model import WorldModel
 
 
 class GameDynamicsMemoryTests(unittest.TestCase):
@@ -29,6 +30,26 @@ class GameDynamicsMemoryTests(unittest.TestCase):
         self.assertEqual(rows[0]["status"], "observed_template_prediction")
         self.assertEqual(rows[0]["outcomes"][0]["evidence"], "predicted_from_observed_template")
         self.assertFalse(rows[0]["outcomes"][0]["prediction_is_observation"])
+
+    def test_shortest_route_uses_observed_progress_edges_only(self):
+        world = WorldModel()
+        start = {"frame": [[0]], "node": "start", "__arc3_levels_completed": 0}
+        short_mid = {"frame": [[1]], "node": "short", "__arc3_levels_completed": 0}
+        long_mid = {"frame": [[2]], "node": "long", "__arc3_levels_completed": 0}
+        long_mid2 = {"frame": [[3]], "node": "long2", "__arc3_levels_completed": 0}
+        goal = {"frame": [[4]], "node": "goal", "__arc3_levels_completed": 1}
+        world.record_transition({"name": "SHORT_FIRST"}, start, short_mid)
+        world.record_transition({"name": "LONG_FIRST"}, start, long_mid)
+        world.record_transition({"name": "SHORT_FINISH"}, short_mid, goal)
+        world.record_transition({"name": "LONG_CONTINUE"}, long_mid, long_mid2)
+        world.record_transition({"name": "LONG_FINISH"}, long_mid2, goal)
+        route = GameDynamicsMemory().shortest_observed_route(start, world)
+        self.assertEqual(route["status"], "route_found")
+        self.assertEqual(route["shortest_observed_steps"], 2)
+        self.assertEqual(
+            route["first_action_signature"],
+            action_signature({"name": "SHORT_FIRST"}),
+        )
 
     def test_bonus_requires_measurable_evidence_and_no_completion_risk(self):
         memory = GameDynamicsMemory(step_cost_per_step=0.5)
