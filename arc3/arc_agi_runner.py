@@ -11,6 +11,9 @@ from enum import Enum
 from typing import Any
 
 from arc3.cognitive_agent import Arc3CognitiveAgent
+from arc3.glyph_agent import GlyphArc3Agent
+from arc3.egp_runtime import EGPEnvironmentRuntime
+from arc3.glyph_game_memory import GlyphGameplayMemory
 from arc3.level_planner import LevelPlanningMemory
 from arc3.motion_planner import forecast_motion
 from arc3.object_perception import perceive_objects
@@ -202,12 +205,16 @@ def main() -> int:
     parser.add_argument("--max-actions", type=int, default=100)
     parser.add_argument("--mcts-depth", type=int, default=3, help="Shallow planning depth (default: 3)")
     parser.add_argument("--mcts-simulations", type=int, default=32, help="MCTS simulations per decision (default: 32)")
+    parser.add_argument("--policy", choices=("legacy", "glyph"), default="legacy", help="ARC3 policy; glyph enables emoji DSL and belief MCTS")
     parser.add_argument("--click-x", type=int, default=32, help="Center/fallback x coordinate")
     parser.add_argument("--click-y", type=int, default=32, help="Center/fallback y coordinate")
     parser.add_argument("--click-strategy", choices=("foreground", "scan", "center"), default="foreground")
     parser.add_argument("--max-click-points", type=int, default=32)
     parser.add_argument("--render-mode", choices=("terminal", "terminal-fast", "human"))
     parser.add_argument("--save-recording", action="store_true")
+    parser.add_argument("--memory-log", default=None, help="JSONL gameplay-memory path (default: arc3_memory/<game-id>.jsonl)")
+    parser.add_argument("--no-persistent-memory", action="store_true", help="Keep gameplay memory in RAM only")
+    parser.add_argument("--memory-chunk-size", type=int, default=4, help="Observed transitions per glyph summary")
     args = parser.parse_args()
 
     if args.max_actions < 1:
@@ -220,6 +227,8 @@ def main() -> int:
         parser.error("click coordinates must be between 0 and 63")
     if not (1 <= args.max_click_points <= 4096):
         parser.error("--max-click-points must be between 1 and 4096")
+    if args.memory_chunk_size < 1:
+        parser.error("--memory-chunk-size must be at least 1")
 
     try:
         import arc_agi
@@ -243,11 +252,18 @@ def main() -> int:
     if frame is None:
         parser.exit(2, "Environment did not return an initial observation.\n")
 
-    agent = Arc3CognitiveAgent(
-        mcts_depth=args.mcts_depth,
-        mcts_simulations=args.mcts_simulations,
-    )
+    if args.policy == "glyph":
+        agent = GlyphArc3Agent(simulations=args.mcts_simulations, depth=args.mcts_depth)
+    else:
+        agent = Arc3CognitiveAgent(
+            mcts_depth=args.mcts_depth,
+            mcts_simulations=args.mcts_simulations,
+        )
+    egp_runtime = EGPEnvironmentRuntime(env) if args.policy == "glyph" else None
     planning_memory = LevelPlanningMemory()
+    safe_game_id = "".join(char if char.isalnum() or char in "-_" else "_" for char in args.game_id) or "game"
+    memory_path = None if args.no_persistent_memory else (args.memory_log or f"arc3_memory/{safe_game_id}.jsonl")
+    gameplay_memory = GlyphGameplayMemory(chunk_size=args.memory_chunk_size, log_path=memory_path)
     history: list[dict[str, Any]] = []
     steps = 0
     navigation_steps = 0
@@ -276,7 +292,18 @@ def main() -> int:
         planning_memory.partitions["motion_forecast"] = last_motion_forecast
         action_records = score_navigation_candidates(action_records, navigation)
         last_navigation = navigation
-        result = agent.select_action(observation, action_records, navigation)
+        if args.policy == "glyph":
+            result = agent.select_action(
+                observation, action_records, navigation,
+                dynamics_context={
+                    "object_tracks": object_track_state,
+                    "motion_forecast": last_motion_forecast,
+                    # Only explicit game metadata may identify bonus opportunities.
+                    "bonus_candidates": observation.get("__arc3_bonus_candidates", []),
+                },
+            )
+        else:
+            result = agent.select_action(observation, action_records, navigation)
         if result["action"] is None:
             terminal = "no_legal_actions"
             break
@@ -301,7 +328,13 @@ def main() -> int:
         action_data = selected_record.get("data") if selected.is_complex() else None
         if selected.is_complex() and not isinstance(action_data, dict):
             action_data = {"x": args.click_x, "y": args.click_y}
-        next_frame = env.step(selected, data=action_data)
+        if egp_runtime is not None:
+            next_frame = egp_runtime.act(
+                legal, selected, selected_record,
+                fallback_data={"x": args.click_x, "y": args.click_y},
+            )
+        else:
+            next_frame = env.step(selected, data=action_data)
         steps += 1
         if next_frame is None:
             terminal = "environment_returned_no_observation"
@@ -309,6 +342,27 @@ def main() -> int:
         next_observation = frame_observation(next_frame)
         planning_memory.record_action(selected_record, observation, next_observation)
         agent.record_transition(selected_record, observation, next_observation)
+        next_perception = perceive_objects(next_observation)
+        next_track_state = update_object_tracks(object_track_state, next_perception)
+        if args.policy == "glyph":
+            agent.dynamics_memory.record_transition(
+                observation, next_observation, object_track_state, next_track_state
+            )
+        before_levels = observation.get("__arc3_levels_completed")
+        after_levels = next_observation.get("__arc3_levels_completed")
+        explicit_progress = (
+            isinstance(before_levels, int) and isinstance(after_levels, int)
+            and after_levels > before_levels
+        )
+        gameplay_memory.record_transition(
+            selected_record, observation, next_observation,
+            perception=next_perception,
+            tracks=next_track_state,
+            before_perception=last_object_perception, before_tracks=object_track_state,
+            navigation=navigation,
+            run_context={"game_id": args.game_id, "seed": args.seed, "policy": args.policy},
+            explicit_progress=explicit_progress,
+        )
         previous_observation = observation
         frame = next_frame
         state = getattr(frame, "state", None)
@@ -320,6 +374,7 @@ def main() -> int:
             terminal = "game_over"
             break
 
+    gameplay_memory.flush()
     scorecard = None
     try:
         score = arcade.close_scorecard()
@@ -337,7 +392,8 @@ def main() -> int:
         "execution_succeeded": runner_exit_code(steps, terminal) == 0,
         "levels_completed": getattr(frame, "levels_completed", None),
         "win_levels": getattr(frame, "win_levels", None),
-        "policy": "ARC-AGI-3 strategy brainstorming plus shallow MCTS over observed transitions",
+        "policy": ("emoji DSL + strategy priors + belief MCTS" if args.policy == "glyph" else "strategy brainstorming + shallow MCTS over observed transitions"),
+        "policy_mode": args.policy,
         "search_configuration": {
             "depth": args.mcts_depth,
             "simulations_per_decision": args.mcts_simulations,
@@ -345,7 +401,9 @@ def main() -> int:
         "navigation_steps": navigation_steps,
         "last_navigation": last_navigation,
         "planning_memory": planning_memory.snapshot(),
+        "gameplay_memory": gameplay_memory.snapshot(),
         "cognitive_agent": agent.snapshot(),
+        "egp_runtime": egp_runtime.snapshot() if egp_runtime is not None else None,
         "motion_forecast": last_motion_forecast,
         "object_perception": last_object_perception,
         "object_tracks": object_track_state,
