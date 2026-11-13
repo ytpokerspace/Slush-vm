@@ -38,6 +38,7 @@ class GlyphGameplayMemoryTests(unittest.TestCase):
             memory.record_transition({"name": "ACTION1"}, before, after)
         self.assertEqual(len(memory.chunks), 2)
         self.assertEqual(len(memory.rollups), 1)
+        self.assertEqual(memory.chunks[0]["action_outcomes"]["ACTION1"]["state_changed_unclassified"], 2)
         self.assertIn("🧱", memory.chunks[0]["glyph"])
         self.assertIn("🗂️", memory.rollups[0]["glyph"])
         self.assertEqual(memory.rollups[0]["first_step"], 1)
