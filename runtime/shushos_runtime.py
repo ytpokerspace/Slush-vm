@@ -1,3 +1,6 @@
+# Copyright (c) 2026 William Gunnell Cox
+# SPDX-License-Identifier: MIT
+
 """SHUSHOS host capability runtime.
 
 This is a deterministic host-side capability layer and MCP stdio server.
