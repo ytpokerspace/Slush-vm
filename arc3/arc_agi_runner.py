@@ -331,8 +331,9 @@ def main() -> int:
         )
         gameplay_memory.record_transition(
             selected_record, observation, next_observation,
-            perception=next_perception, navigation=navigation,
-            explicit_progress=explicit_progress,
+            perception=next_perception,
+            tracks=update_object_tracks(object_track_state, next_perception),
+            navigation=navigation, explicit_progress=explicit_progress,
         )
         previous_observation = observation
         frame = next_frame
