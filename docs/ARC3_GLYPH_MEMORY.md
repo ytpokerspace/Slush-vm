@@ -6,7 +6,7 @@ Keep an evidence-linked memory of what happened, where objects were, which actio
 
 ## Memory levels
 
-1. **Event records:** one record per observed action transition. Includes action and coordinates, before/after scene digests, exact grid SHA-256, grid dimensions, object cell coordinates/bounding boxes, tracked positions when supplied, navigation target, and outcome classification.
+1. **Event records:** one record per observed action transition. Includes action and coordinates, before/after scene digests, exact before/after grid SHA-256 values, grid dimensions, before/after object cell coordinates and bounding boxes, tracked positions, navigation target, run context (game, seed, policy), level counters, and outcome classification.
 2. **Chunk summaries:** by default, every four events are summarized into a glyph string, outcome/action counts, scene sequence, position sequence, and checksum.
 3. **Rollups:** every four chunks are summarized again into a higher-level glyph with aggregated outcome/action counts and the constituent chunk checksums.
 
