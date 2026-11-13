@@ -122,7 +122,8 @@ class ActionProbabilityScorer:
                 "probability": {
                     "verified_progress_or_win": round(p_progress, 6),
                     "observation_change": round(p_change, 6),
-                    "evidence_attempts": attempts,\n                    "evidence_scope": evidence_scope,
+                    "evidence_attempts": attempts,
+                    "evidence_scope": evidence_scope,
                     "verified_progress_or_win_count": progress,
                     "terminal_win_count": wins,
                     "calibration": "beta_binomial_smoothed_empirical",
