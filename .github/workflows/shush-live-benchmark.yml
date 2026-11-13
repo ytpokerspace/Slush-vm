@@ -38,7 +38,7 @@ jobs:
           python tools/generate_c_registry.py --check
       - name: Run opt-in model calls
         env:
-          SHUSH_BENCHMARK_API_KEY: ${{ secrets.SHUSH_BENCHMARK_API_KEY }}
+          SHUSH_BENCHMARK_API_KEY: ${{ secrets.SHUSH_BENCHMARK_API_KEY0234226d-7a2d-4bb4-a989-74752358a9c3 }}
           SHUSH_BENCHMARK_MODEL: ${{ inputs.model }}
           SHUSH_BENCHMARK_BASE_URL: ${{ inputs.base_url }}
         run: |
