@@ -41,6 +41,16 @@ The validator uses only the Python standard library. It checks required fields a
 5. Measure token savings and correctness instead of assuming compression improves quality.
 
 
+## ARC-AGI-3 emoji glyph engine (experimental)
+
+The new ARC3 glyph engine combines a typed emoji DSL, evidence-tagged grid transition templates, existing strategy priors, and bounded belief-aware MCTS. It is available as an opt-in runner policy:
+
+~~~sh
+python -m arc3.arc_agi_runner --policy glyph --game-id ls20 --mcts-depth 4 --mcts-simulations 64
+~~~
+
+See [ARC3_GLYPH_ENGINE.md](docs/ARC3_GLYPH_ENGINE.md) for the glyph vocabulary, research mapping, limitations, and test command. The default runner policy remains `legacy` until public-game comparisons show that the new policy is reliable. Predicted outcomes are not counted as observed transitions; the new policy has not yet been benchmark-validated.
+
 ## ARC-AGI-3 object value planning (experimental)
 
 The ARC solver branch includes `arc3/object_value_planner.py`, a small heuristic scaffold for separating per-object decision estimates from global objective arbitration. It scores goal value, estimated success probability, information value, risk, and action cost; it can recommend pursuing, preparing for, or deferring an objective. Deferred objectives remain in the result so they can be reconsidered after new observations.
