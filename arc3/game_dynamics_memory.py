@@ -107,16 +107,16 @@ class GameDynamicsMemory:
                 or not isinstance(signature, str) or not signature
                 or evidence not in {"verified_history", "environment_metadata"}
             ):
+                results.append({
+                    "status": "rejected_insufficient_evidence",
+                    "reason": "Requires measurable reward, collection odds, extra steps, completion odds, legal-action signature and evidence provenance.",
+                })
+                continue
             if extra_steps > 0 and self.step_cost_per_step is None:
                 results.append({
                     "status": "rejected_insufficient_evidence",
                     "reason": "No configured score-to-step exchange rate; extra-step opportunity cost cannot be measured.",
                     "action_signature": signature,
-                })
-                continue
-                results.append({
-                    "status": "rejected_insufficient_evidence",
-                    "reason": "Requires measurable reward, collection odds, extra steps, completion odds, legal-action signature and evidence provenance.",
                 })
                 continue
             if float(after) < float(before):
