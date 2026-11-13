@@ -47,6 +47,7 @@ Emoji are readable aliases only. Canonical operation names and typed Python cont
 2. arc3/transition_learner.py learns exact-coordinate grid edit templates from observed before/after pairs. Predictions require matching preconditions and remain labeled predictions.
 3. arc3/belief_mcts.py searches only actions supplied as legal at the root. Predicted outcomes are one-step leaf estimates; deeper rollout uses observed transitions only.
 4. arc3/glyph_agent.py connects the existing strategy-prior generator, world model, transition learner and belief MCTS.
+5. The current belief search is a bounded root-action UCB controller with sampled observed rollouts and predicted one-step leaves; it is not yet a fully branching belief-state tree.
 
 ## Limitations
 
