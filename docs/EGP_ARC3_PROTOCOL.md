@@ -160,7 +160,7 @@ Defaults are initial engineering settings, not benchmark-proven optima:
 
 `arc3.game_dynamics_memory.GameDynamicsMemory` is an additional memory partition. It does not replace or mutate the world model, exact transition learner, or checksummed hierarchical gameplay log. It records predicted-versus-observed object-position comparisons as a separate history.
 
-The current one-step object forecast extrapolates each visible track's last observed displacement. It is explicitly heuristic, not a learned action-conditioned physics model or calibrated probability. Actual next-frame positions are compared against forecasts; only actual frames remain observations.
+The current one-step object forecast extrapolates each visible track's last observed displacement. Separately, each legal action is passed through the existing transition learner, which can produce candidate-specific next-scene predictions only when an observed template matches. Predicted scenes are re-perceived to report object centers and bounds. These are evidence-backed template predictions, not a generalized learned physics engine or calibrated probabilities. Actual next-frame positions are compared against forecasts; only actual frames remain observations.
 
 Bonus candidates are evaluated only when the caller supplies:
 - a measurable positive score gain;
