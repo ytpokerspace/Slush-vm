@@ -38,7 +38,8 @@ class GlyphDslTests(unittest.TestCase):
         program = parse_program(DEFAULT_PROGRAM)
         validate_program(program)
         self.assertEqual(program.instructions[0].operation, "observe")
-        self.assertEqual(program.instructions[-1].operation, "memorize")
+        self.assertIn("memorize", [item.operation for item in program.instructions])
+        self.assertEqual(program.instructions[-1].operation, "replan")
 
     def test_act_requires_select(self):
         with self.assertRaises(DSLParseError):
