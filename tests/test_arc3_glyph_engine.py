@@ -27,7 +27,9 @@ class GlyphDslTests(unittest.TestCase):
         rendered = render_protocol({"grid_shape": [12, 12], "legal_action_count": 3, "mcts_depth": 2})
         self.assertIn("👁️", rendered["glyph_stream"])
         self.assertEqual(rendered["stages"][0]["fields"]["grid_shape"], [12, 12])
-        self.assertEqual(rendered["stages"][12]["fields"]["legal_action_count"], 3)
+        select_stage = next(stage for stage in rendered["stages"] if stage["operation"] == "select")
+        self.assertEqual(select_stage["fields"]["legal_action_count"], 3)
+        self.assertEqual(len(rendered["stages"]), len(__import__("arc3.glyph_dsl", fromlist=["GLYPHS"]).GLYPHS))
         self.assertEqual(len(rendered["context_sha256"]), 64)
 
     def test_unknown_glyph_rejected(self):
