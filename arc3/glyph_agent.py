@@ -48,6 +48,9 @@ class GlyphArc3Agent:
             dynamics_context.get("object_tracks"),
             dynamics_context.get("motion_forecast"),
             dynamics_context.get("bonus_candidates"),
+            observation=observation,
+            legal_actions=legal_actions,
+            transition_model=self.transition_model,
         )
         viable_bonus = {
             row["action_signature"]: row
