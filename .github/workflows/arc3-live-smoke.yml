@@ -72,6 +72,7 @@ jobs:
             --games "$GAME_ID" \
             --seeds "$SEEDS" \
             --max-actions "$MAX_ACTIONS" \
+            --policies legacy,glyph \
             --click-strategy foreground \
             --max-click-points 16 \
             --run-timeout 180 \
