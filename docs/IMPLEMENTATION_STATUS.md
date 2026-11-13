@@ -38,3 +38,26 @@ To complete integration, the real compiler/VM source needs to be committed to th
 3. Run the live benchmark with a fixed model and provider, first as a 3-call smoke test and then all 60 requests.
 4. Repeat the benchmark across multiple runs; publish raw results and compare accuracy, provider-reported tokens, latency, and total cost per successful task.
 5. Expand beyond string utilities to nontrivial tasks and include registry/tool/runtime overhead before making any efficiency claim.
+
+
+## Unified host capability runtime (feature branch)
+
+Branch: feat/unified-capability-runtime
+
+Added in this branch:
+- Python host capability runtime and MCP stdio server at runtime/shushos_runtime.py.
+- ARC-2 adapter calls the separate arc_r2.primitives.fit_program implementation at a pinned revision; no copied solver implementation and no MCTS/beam substitution.
+- ARC-AGI-3 legal-action validation envelope only; no unverified game policy or environment execution.
+- QBS Pareto-front ranking with separate criteria and no fabricated aggregate probability.
+- Glyphic Path Memory create/retrieve/hybridize operations with SHA-256 evidence checks and hypothesis-labelled hybrids.
+- CSC-LCH source-byte preservation, duplicate-ID rejection, SHA-256, active/stub representation, byte accounting, budgeted graph hydration and exact reconstruction.
+- Runtime conformance tests and a CI workflow.
+
+Important boundary:
+- These are host-side capabilities exposed to an LLM through MCP tools. They are not yet native SHUSH bytecode opcodes or calls from a complete SHUSH parser/VM.
+- The C11 dispatcher remains a separate reference implementation. Native VM integration is a remaining gate.
+- ARC-AGI-3 is not a solver yet; its game policy and transition model remain unspecified in source notes.
+- ARC-2 adapter exact-fit output is not held-out validation or an official ARC score.
+- No live LLM benchmark, token savings, latency, cost, energy or accuracy improvement is claimed.
+
+Verification state: CI must pass on the feature branch before this implementation is described as tested. See docs/LLM_INTEGRATION.md.
