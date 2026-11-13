@@ -43,6 +43,7 @@ jobs:
           python -m pip install "git+https://github.com/arcprize/ARC-AGI.git"
       - name: Run bounded multi-seed live benchmark with visual target navigation
         env:
+          ARC_API_KEY: ${{ secrets.ARC_API_KEY }}
           GAMES: ${{ inputs.games || 'ls20,ft09,vc33' }}
           MAX_ACTIONS: ${{ inputs.max_actions || '24' }}
           SEEDS: ${{ inputs.seeds || '0,1,2' }}
@@ -74,6 +75,10 @@ jobs:
               exit 2
             fi
           done
+          if [ -z "${ARC_API_KEY:-}" ]; then
+            echo "::error::Missing ARC_API_KEY repository secret. Add it in GitHub repository Actions secrets before dispatching this live benchmark."
+            exit 1
+          fi
           set +e
           python -m arc3.benchmark \
             --games "$GAMES" \
