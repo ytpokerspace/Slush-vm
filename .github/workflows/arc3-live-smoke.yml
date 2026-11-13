@@ -1,6 +1,11 @@
 name: ARC-AGI-3 Live Benchmark
 
 on:
+  push:
+    branches:
+      - feat/arc3-glyph-belief-engine
+    paths:
+      - .github/workflows/arc3-live-smoke.yml
   workflow_dispatch:
     inputs:
       run_live:
@@ -30,7 +35,7 @@ permissions:
 jobs:
   live-benchmark:
     runs-on: ubuntu-latest
-    if: ${{ inputs.run_live == true }}
+    if: ${{ github.event_name == 'push' || inputs.run_live == true }}
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
