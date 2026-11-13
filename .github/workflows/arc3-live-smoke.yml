@@ -1,0 +1,112 @@
+name: ARC-AGI-3 Live Benchmark
+
+on:
+  push:
+    branches:
+      - feat/arc3-glyph-belief-engine
+    paths:
+      - .github/workflows/arc3-live-smoke.yml
+  workflow_dispatch:
+    inputs:
+      run_live:
+        description: "Explicitly enable live ARC-AGI-3 episodes. Leave false to avoid running the game."
+        required: true
+        default: false
+        type: boolean
+      games:
+        description: "Comma-separated public game IDs (default: three anonymously available games)"
+        required: true
+        default: "ls20,ft09,vc33"
+        type: string
+      max_actions:
+        description: "Maximum actions per episode for multi-object visual goal hypotheses"
+        required: true
+        default: "24"
+        type: string
+      seeds:
+        description: "Comma-separated seeds"
+        required: true
+        default: "0,1,2"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  live-benchmark:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || inputs.run_live == true }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install official ARC-AGI-3 toolkit from source
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "git+https://github.com/arcprize/ARC-AGI.git"
+      - name: Run bounded multi-seed live benchmark with visual target navigation
+        env:
+          ARC_API_KEY: ${{ secrets.ARC_API_KEY }}
+          GAMES: ${{ inputs.games || 'ls20,ft09,vc33' }}
+          MAX_ACTIONS: ${{ inputs.max_actions || '24' }}
+          SEEDS: ${{ inputs.seeds || '0,1,2' }}
+        run: |
+          set -e
+          IFS=',' read -ra GAME_LIST <<< "$GAMES"
+          if (( ${#GAME_LIST[@]} < 1 || ${#GAME_LIST[@]} > 25 )); then
+            echo "Provide between one and 25 game IDs."
+            exit 2
+          fi
+          for game in "${GAME_LIST[@]}"; do
+            if ! [[ "$game" =~ ^[a-z0-9]{4}$ ]]; then
+              echo "Invalid game ID: $game"
+              exit 2
+            fi
+          done
+          if ! [[ "$MAX_ACTIONS" =~ ^[0-9]+$ ]] || (( MAX_ACTIONS < 1 || MAX_ACTIONS > 256 )); then
+            echo "max_actions must be an integer from 1 to 256."
+            exit 2
+          fi
+          IFS=',' read -ra SEED_LIST <<< "$SEEDS"
+          if (( ${#SEED_LIST[@]} < 1 || ${#SEED_LIST[@]} > 4 )); then
+            echo "Provide between one and four seeds per run."
+            exit 2
+          fi
+          for seed in "${SEED_LIST[@]}"; do
+            if ! [[ "$seed" =~ ^-?[0-9]+$ ]]; then
+              echo "Seeds must be comma-separated integers."
+              exit 2
+            fi
+          done
+          if [ -z "${ARC_API_KEY:-}" ]; then
+            echo "::error::Missing ARC_API_KEY repository secret. Add it in GitHub repository Actions secrets before dispatching this live benchmark."
+            exit 1
+          fi
+          set +e
+          python -m arc3.benchmark \
+            --games "$GAMES" \
+            --seeds "$SEEDS" \
+            --max-actions "$MAX_ACTIONS" \
+            --policies legacy,glyph \
+            --click-strategy foreground \
+            --max-click-points 16 \
+            --run-timeout 60 \
+            --save-recording \
+            --output arc3-benchmark.json > arc3-benchmark-console.log 2>&1
+          status=$?
+          cat arc3-benchmark-console.log
+          if [ -f arc3-benchmark.json ]; then cat arc3-benchmark.json; fi
+          exit "$status"
+      - name: Upload benchmark report and recordings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-live-benchmark-${{ github.run_id }}
+          path: |
+            arc3-benchmark.json
+            arc3-benchmark-console.log
+            recordings/**
+          if-no-files-found: warn
+          retention-days: 30
