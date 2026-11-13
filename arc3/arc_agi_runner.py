@@ -333,6 +333,7 @@ def main() -> int:
             selected_record, observation, next_observation,
             perception=next_perception,
             tracks=update_object_tracks(object_track_state, next_perception),
+            before_perception=last_object_perception, before_tracks=object_track_state,
             navigation=navigation, explicit_progress=explicit_progress,
         )
         previous_observation = observation
