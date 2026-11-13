@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 from arc3.belief_mcts import BeliefMCTS
+from arc3.action_glyph_scorer import ActionProbabilityScorer
 from arc3.glyph_dsl import DEFAULT_PROGRAM, compile_program, parse_program, render_protocol, validate_program
 from arc3.strategy_studio import brainstorm_action_priors
 from arc3.transition_learner import TransitionLearner
@@ -16,6 +17,7 @@ class GlyphArc3Agent:
     world_model: WorldModel = field(default_factory=WorldModel)
     transition_model: TransitionLearner = field(default_factory=TransitionLearner)
     decisions: int = 0
+    action_scorer: ActionProbabilityScorer = field(default_factory=ActionProbabilityScorer)
     last_diagnostics: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
@@ -33,6 +35,17 @@ class GlyphArc3Agent:
             self.world_model, self.transition_model, self.simulations, self.depth,
             self.exploration, seed=self.decisions
         ).search(observation, legal_actions, studio["priors"])
+        action_scores = self.action_scorer.score(
+            observation, legal_actions, self.world_model, studio["priors"],
+            result.get("diagnostics", {}).get("top_candidates", []),
+        )
+        if action_scores:
+            selected_signature = action_scores[0]["action_signature"]
+            result["action"] = next(
+                action for action in legal_actions
+                if __import__("arc3.world_model", fromlist=["action_signature"]).action_signature(action)
+                == selected_signature
+            )
         self.decisions += 1
         self.last_diagnostics = {
             "decision": self.decisions, "state_id": observed["state_id"],
@@ -47,6 +60,8 @@ class GlyphArc3Agent:
                 "outcome": "pending",
             }),
             "strategy_studio": studio, "belief_mcts": result.get("diagnostics", {}),
+            "action_probability_scores": action_scores,
+            "selected_action_glyph": action_scores[0] if action_scores else None,
             "transition_learner": self.transition_model.snapshot(),
         }
         result["diagnostics"] = self.last_diagnostics
