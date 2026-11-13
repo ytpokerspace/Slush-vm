@@ -5,6 +5,10 @@ on:
     paths:
       - "tools/arc-api-key-helper-android/**"
       - ".github/workflows/build-android-helper.yml"
+  pull_request:
+    paths:
+      - "tools/arc-api-key-helper-android/**"
+      - ".github/workflows/build-android-helper.yml"
   workflow_dispatch:
 
 permissions:
