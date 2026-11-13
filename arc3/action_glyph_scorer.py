@@ -94,7 +94,7 @@ class ActionProbabilityScorer:
                 # as weaker prior evidence, while labeling that scope explicitly.
                 family = world_model.action_stats(action)
                 attempts = int(family.get("attempts", 0))
-                progress = int(family.get("explicit_progress", 0)) + int(family.get("terminal_wins", 0))
+                progress = min(attempts, int(family.get("explicit_progress", 0)) + int(family.get("terminal_wins", 0)))
                 changed = int(family.get("changed", 0))
                 wins = int(family.get("terminal_wins", 0))
                 evidence_scope = "action_family"
