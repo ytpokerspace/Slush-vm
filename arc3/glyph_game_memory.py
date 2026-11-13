@@ -131,18 +131,20 @@ class GlyphGameplayMemory:
             return "💥", "terminal_failure"
         if explicit_progress:
             return "📈", "verified_progress"
-        if _digest(before) == _digest(after):
+        if scene_manifest(before)["grid_sha256"] == scene_manifest(after)["grid_sha256"]:
             return "⏸️", "no_visible_change"
         return "🔄", "state_changed_unclassified"
 
     def record_transition(self, action: Any, before: Any, after: Any, *,
                           perception: dict[str, Any] | None = None,
                           tracks: dict[str, Any] | None = None,
+                          before_perception: dict[str, Any] | None = None,
+                          before_tracks: dict[str, Any] | None = None,
                           navigation: dict[str, Any] | None = None,
                           explicit_progress: bool = False) -> dict[str, Any]:
         """Record one observed transition; predicted states must never be passed as observations."""
         self.step_count += 1
-        scene_before = scene_manifest(before)
+        scene_before = scene_manifest(before, before_perception, before_tracks)
         scene_after = scene_manifest(after, perception, tracks)
         glyph, outcome = self._outcome(before, after, explicit_progress)
         action_name = action.get("name", "unknown") if isinstance(action, dict) else str(action)
@@ -153,9 +155,13 @@ class GlyphGameplayMemory:
             "coordinates": coords,
             "before_scene": scene_before["scene_sha256"],
             "after_scene": scene_after["scene_sha256"],
+            "before_grid_checksum": scene_before["grid_sha256"],
             "grid_checksum": scene_after["grid_sha256"],
+            "before_grid_shape": scene_before["grid_shape"],
             "grid_shape": scene_after["grid_shape"],
+            "before_objects": scene_before["objects"],
             "objects": scene_after["objects"],
+            "before_tracks": scene_before["tracks"],
             "tracks": scene_after["tracks"],
             "outcome": outcome,
             "explicit_progress": bool(explicit_progress),
@@ -186,7 +192,8 @@ class GlyphGameplayMemory:
         action_outcomes: dict[str, Counter[str]] = {}
         for row in rows:
             action_outcomes.setdefault(row["action"], Counter())[row["outcome"]] += 1
-        positions = [row.get("objects", []) for row in rows]
+        positions = [{"before": row.get("before_objects", []), "after": row.get("objects", [])}
+                     for row in rows]
         core = {
             "first_step": rows[0]["step"],
             "last_step": rows[-1]["step"],
