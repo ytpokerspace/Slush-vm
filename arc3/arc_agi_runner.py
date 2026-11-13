@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections import Counter
 from enum import Enum
 from typing import Any
 
@@ -71,6 +72,7 @@ def candidate_click_points(
     center_y: int = 32,
     max_points: int = 32,
     previous_observation: Any = None,
+    navigation: dict[str, Any] | None = None,
 ) -> list[dict[str, int]]:
     """Generate bounded deterministic click candidates from a serialized frame.
 
@@ -118,6 +120,18 @@ def candidate_click_points(
     else:
         layers = frame
 
+    # Ignore the dominant scene colors. ARC frames commonly use nonzero values
+    # for walls/floors/HUD, so treating every nonzero pixel as a target floods the
+    # candidate list with background coordinates (observed in the live FT09 run).
+    color_counts = Counter(
+        cell
+        for layer in layers if isinstance(layer, list)
+        for row in layer[:64] if isinstance(row, list)
+        for cell in row[:64]
+        if cell is not None
+    )
+    background = {color for color, _ in color_counts.most_common(3)}
+
     points: list[tuple[int, int]] = []
     seen: set[tuple[int, int]] = set()
     for layer in layers:
@@ -127,14 +141,30 @@ def candidate_click_points(
             if not isinstance(row, list):
                 continue
             for x, cell in enumerate(row[:64]):
-                if cell not in (0, "0", None) and (x, y) not in seen:
+                if cell not in background and cell not in (0, "0", None) and (x, y) not in seen:
                     seen.add((x, y))
                     points.append((x, y))
+
+    # When the observation-only navigation heuristic has a concrete target and
+    # the environment exposes a complex (coordinate-bearing) action, include the
+    # target center as a candidate. This is a hypothesis to test, not a guaranteed
+    # game mechanic; the action remains supplied by the environment.
+    if isinstance(navigation, dict):
+        target = navigation.get("target_center")
+        if isinstance(target, (list, tuple)) and len(target) == 2:
+            try:
+                tx, ty = int(target[0]), int(target[1])
+            except (TypeError, ValueError):
+                pass
+            else:
+                if 0 <= tx < 64 and 0 <= ty < 64 and (tx, ty) not in seen:
+                    points.insert(0, (tx, ty))
+                    seen.add((tx, ty))
+
     if not points:
         return [{"x": center_x, "y": center_y}]
-    # Prefer pixels that changed since the prior frame: these are likely to
-    # belong to moving or newly active objects. Keep a foreground fallback so
-    # stationary goals remain clickable when the scene has no visible motion.
+
+    # Prefer changed foreground pixels, never changed background pixels.
     previous_frame = (
         previous_observation.get("frame")
         if isinstance(previous_observation, dict) else None
@@ -155,10 +185,11 @@ def candidate_click_points(
                 if not isinstance(row, list) or y >= len(prior) or not isinstance(prior[y], list):
                     continue
                 for x, cell in enumerate(row[:64]):
-                    if x < len(prior[y]) and cell != prior[y][x] and cell not in (0, "0", None):
+                    if (x < len(prior[y]) and cell != prior[y][x]
+                            and cell not in background and cell not in (0, "0", None)):
                         changed.append((x, y))
         if changed:
-            points = list(dict.fromkeys(changed))
+            points = list(dict.fromkeys(changed + [p for p in points if p in seen and navigation and p == tuple(navigation.get("target_center", ())) ]))
 
     # Evenly sample the discovered positions so large foreground areas don't
     # exhaust the action budget on adjacent cells.
@@ -174,12 +205,13 @@ def candidate_click_points(
 def make_action_records(legal_actions: list[Any], observation: dict[str, Any],
                         click_strategy: str, center_x: int, center_y: int,
                         max_click_points: int = 32,
-                        previous_observation: Any = None) -> list[dict[str, Any]]:
+                        previous_observation: Any = None,
+                        navigation: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     """Expand complex legal actions into legal action + coordinate candidates."""
     records: list[dict[str, Any]] = []
     points = candidate_click_points(
         observation, click_strategy, center_x, center_y, max_click_points,
-        previous_observation,
+        previous_observation, navigation,
     )
     for action in legal_actions:
         name = getattr(action, "name", str(action))
@@ -276,11 +308,11 @@ def main() -> int:
     while steps < args.max_actions:
         legal = list(env.action_space or [])
         observation = frame_observation(frame)
+        navigation = infer_navigation(observation)
         action_records = make_action_records(
             legal, observation, args.click_strategy, args.click_x, args.click_y,
-            args.max_click_points, previous_observation,
+            args.max_click_points, previous_observation, navigation,
         )
-        navigation = infer_navigation(observation)
         last_object_perception = perceive_objects(observation)
         object_track_state = update_object_tracks(object_track_state, last_object_perception)
         planning_memory.partitions["object_perception"] = last_object_perception
