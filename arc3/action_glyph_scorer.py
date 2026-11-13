@@ -88,6 +88,16 @@ class ActionProbabilityScorer:
             progress = int(edge.get("verified_progress_or_win", 0))
             changed = int(edge.get("changed", 0))
             wins = int(edge.get("terminal_wins", 0))
+            evidence_scope = "exact_state_action"
+            if attempts == 0:
+                # The exact state may be new every turn. Use action-family history
+                # as weaker prior evidence, while labeling that scope explicitly.
+                family = world_model.action_stats(action)
+                attempts = int(family.get("attempts", 0))
+                progress = int(family.get("explicit_progress", 0)) + int(family.get("terminal_wins", 0))
+                changed = int(family.get("changed", 0))
+                wins = int(family.get("terminal_wins", 0))
+                evidence_scope = "action_family"
             p_progress = (progress + self.alpha) / (attempts + self.alpha + self.beta)
             p_change = (changed + self.alpha) / (attempts + self.alpha + self.beta)
             # Exploration is explicitly a value bonus, not a success probability.
@@ -112,7 +122,7 @@ class ActionProbabilityScorer:
                 "probability": {
                     "verified_progress_or_win": round(p_progress, 6),
                     "observation_change": round(p_change, 6),
-                    "evidence_attempts": attempts,
+                    "evidence_attempts": attempts,\n                    "evidence_scope": evidence_scope,
                     "verified_progress_or_win_count": progress,
                     "terminal_win_count": wins,
                     "calibration": "beta_binomial_smoothed_empirical",
