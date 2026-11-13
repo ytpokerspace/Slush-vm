@@ -7,6 +7,7 @@ from arc3.action_glyph_scorer import ActionProbabilityScorer
 from arc3.glyph_dsl import DEFAULT_PROGRAM, compile_program, parse_program, render_protocol, validate_program
 from arc3.strategy_studio import brainstorm_action_priors
 from arc3.transition_learner import TransitionLearner
+from arc3.world_model import action_signature
 from arc3.world_model import WorldModel
 
 @dataclass
@@ -43,7 +44,7 @@ class GlyphArc3Agent:
             selected_signature = action_scores[0]["action_signature"]
             result["action"] = next(
                 action for action in legal_actions
-                if __import__("arc3.world_model", fromlist=["action_signature"]).action_signature(action)
+                if action_signature(action)
                 == selected_signature
             )
         self.decisions += 1
