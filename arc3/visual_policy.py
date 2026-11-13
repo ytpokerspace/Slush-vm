@@ -228,11 +228,37 @@ def infer_navigation(observation: Any) -> dict[str, Any] | None:
 def score_navigation_candidates(
     action_records: list[dict[str, Any]], navigation: dict[str, Any] | None
 ) -> list[dict[str, Any]]:
-    """Attach a strong preference for the inferred legal direction, if available."""
+    """Prefer an inferred legal direction or a click at the inferred target.
+
+    Directional actions are preferred only when the environment supplied that
+    exact action. For coordinate-bearing actions, a click candidate at the
+    inferred target center is preferred instead; this bridges click-only games
+    without inventing an environment action.
+    """
     if navigation is None:
         return action_records
-    preferred = navigation["action"]
-    return [
-        {**record, "score": 100.0 if record.get("name") == preferred else 0.0}
-        for record in action_records
-    ]
+    preferred = navigation.get("action")
+    target = navigation.get("target_center")
+    target_xy = None
+    if isinstance(target, (list, tuple)) and len(target) == 2:
+        try:
+            target_xy = (int(target[0]), int(target[1]))
+        except (TypeError, ValueError):
+            target_xy = None
+
+    scored = []
+    for record in action_records:
+        score = 0.0
+        if record.get("name") == preferred:
+            score = 100.0
+        else:
+            data = record.get("data")
+            if target_xy is not None and isinstance(data, dict):
+                try:
+                    point = (int(data.get("x")), int(data.get("y")))
+                except (TypeError, ValueError):
+                    point = None
+                if point == target_xy:
+                    score = 100.0
+        scored.append({**record, "score": score})
+    return scored

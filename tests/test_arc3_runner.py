@@ -1,6 +1,7 @@
 import unittest
 
 from arc3.arc_agi_runner import candidate_click_points, runner_exit_code
+from arc3.visual_policy import score_navigation_candidates
 
 
 class RunnerFailureTests(unittest.TestCase):
@@ -26,6 +27,44 @@ class RunnerFailureTests(unittest.TestCase):
 
     def test_zero_step_run_is_failure(self):
         self.assertEqual(runner_exit_code(0, "no_legal_actions"), 1)
+
+    def test_foreground_clicks_exclude_dominant_background_colors(self):
+        frame = [[5] * 16 for _ in range(16)]
+        for x in range(2, 12):
+            frame[2][x] = 9
+            frame[3][x] = 4
+        frame[15][1] = 8
+        frame[15][2] = 2
+        frame[15][3] = 12
+        points = candidate_click_points({"frame": frame}, max_points=16)
+        self.assertEqual(
+            points,
+            [{"x": 1, "y": 15}, {"x": 2, "y": 15}, {"x": 3, "y": 15}],
+        )
+
+    def test_navigation_target_is_included_even_when_it_is_background(self):
+        frame = [[5] * 16 for _ in range(16)]
+        for x in range(2, 12):
+            frame[2][x] = 9
+            frame[3][x] = 4
+        frame[15][1] = 8
+        frame[15][2] = 2
+        frame[15][3] = 12
+        navigation = {"action": "ACTION1", "target_center": [8, 8]}
+        points = candidate_click_points(
+            {"frame": frame}, max_points=4, navigation=navigation
+        )
+        self.assertEqual(points[0], {"x": 8, "y": 8})
+
+    def test_navigation_hint_scores_legal_click_at_target(self):
+        records = [
+            {"name": "ACTION6", "data": {"x": 1, "y": 1}},
+            {"name": "ACTION6", "data": {"x": 8, "y": 9}},
+        ]
+        navigation = {"action": "ACTION1", "target_center": [8, 9]}
+        scored = score_navigation_candidates(records, navigation)
+        self.assertEqual(scored[0]["score"], 0.0)
+        self.assertEqual(scored[1]["score"], 100.0)
 
 
 if __name__ == "__main__":
