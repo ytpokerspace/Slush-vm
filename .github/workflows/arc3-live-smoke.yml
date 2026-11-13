@@ -44,7 +44,7 @@ jobs:
       - name: Run bounded multi-seed live benchmark with visual target navigation
         env:
           GAMES: ${{ inputs.games || 'ls20,ft09,vc33' }}
-          MAX_ACTIONS: ${{ inputs.max_actions || '64' }}
+          MAX_ACTIONS: ${{ inputs.max_actions || '24' }}
           SEEDS: ${{ inputs.seeds || '0,1,2' }}
         run: |
           set -e
