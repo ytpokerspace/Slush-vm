@@ -3,7 +3,7 @@ name: ARC-AGI-3 Live Benchmark
 on:
   workflow_dispatch:
     inputs:
-      run_live:true
+      run_live:
         description: "Explicitly enable live ARC-AGI-3 episodes. Leave false to avoid running the game."
         required: true
         default: false
