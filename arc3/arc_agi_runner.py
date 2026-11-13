@@ -12,6 +12,7 @@ from typing import Any
 
 from arc3.cognitive_agent import Arc3CognitiveAgent
 from arc3.glyph_agent import GlyphArc3Agent
+from arc3.egp_runtime import EGPEnvironmentRuntime
 from arc3.glyph_game_memory import GlyphGameplayMemory
 from arc3.level_planner import LevelPlanningMemory
 from arc3.motion_planner import forecast_motion
@@ -258,6 +259,7 @@ def main() -> int:
             mcts_depth=args.mcts_depth,
             mcts_simulations=args.mcts_simulations,
         )
+    egp_runtime = EGPEnvironmentRuntime(env) if args.policy == "glyph" else None
     planning_memory = LevelPlanningMemory()
     safe_game_id = "".join(char if char.isalnum() or char in "-_" else "_" for char in args.game_id) or "game"
     memory_path = None if args.no_persistent_memory else (args.memory_log or f"arc3_memory/{safe_game_id}.jsonl")
@@ -315,7 +317,13 @@ def main() -> int:
         action_data = selected_record.get("data") if selected.is_complex() else None
         if selected.is_complex() and not isinstance(action_data, dict):
             action_data = {"x": args.click_x, "y": args.click_y}
-        next_frame = env.step(selected, data=action_data)
+        if egp_runtime is not None:
+            next_frame = egp_runtime.act(
+                legal, selected, selected_record,
+                fallback_data={"x": args.click_x, "y": args.click_y},
+            )
+        else:
+            next_frame = env.step(selected, data=action_data)
         steps += 1
         if next_frame is None:
             terminal = "environment_returned_no_observation"
@@ -379,6 +387,7 @@ def main() -> int:
         "planning_memory": planning_memory.snapshot(),
         "gameplay_memory": gameplay_memory.snapshot(),
         "cognitive_agent": agent.snapshot(),
+        "egp_runtime": egp_runtime.snapshot() if egp_runtime is not None else None,
         "motion_forecast": last_motion_forecast,
         "object_perception": last_object_perception,
         "object_tracks": object_track_state,
