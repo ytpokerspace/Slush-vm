@@ -2,6 +2,7 @@ import unittest
 
 from arc3.game_dynamics_memory import GameDynamicsMemory
 from arc3.world_model import action_signature
+from arc3.transition_learner import TransitionLearner
 
 
 class GameDynamicsMemoryTests(unittest.TestCase):
@@ -15,6 +16,19 @@ class GameDynamicsMemoryTests(unittest.TestCase):
         })
         self.assertEqual(result["objects"][0]["predicted_next_position"], [5.0, 4.0])
         self.assertFalse(result["predictions_are_observations"])
+
+    def test_action_conditioned_prediction_uses_observed_transition_template(self):
+        learner = TransitionLearner()
+        before = {"frame": [[0, 1, 0]]}
+        after = {"frame": [[0, 0, 1]]}
+        action = {"name": "MOVE_RIGHT"}
+        learner.observe(action, before, after)
+        rows = GameDynamicsMemory().predict_action_outcomes(
+            before, [action], learner
+        )
+        self.assertEqual(rows[0]["status"], "observed_template_prediction")
+        self.assertEqual(rows[0]["outcomes"][0]["evidence"], "predicted_from_observed_template")
+        self.assertFalse(rows[0]["outcomes"][0]["prediction_is_observation"])
 
     def test_bonus_requires_measurable_evidence_and_no_completion_risk(self):
         memory = GameDynamicsMemory(step_cost_per_step=0.5)
