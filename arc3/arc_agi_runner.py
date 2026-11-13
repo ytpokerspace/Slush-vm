@@ -259,7 +259,8 @@ def main() -> int:
             mcts_simulations=args.mcts_simulations,
         )
     planning_memory = LevelPlanningMemory()
-    memory_path = None if args.no_persistent_memory else (args.memory_log or f"arc3_memory/{args.game_id}.jsonl")
+    safe_game_id = "".join(char if char.isalnum() or char in "-_" else "_" for char in args.game_id) or "game"
+    memory_path = None if args.no_persistent_memory else (args.memory_log or f"arc3_memory/{safe_game_id}.jsonl")
     gameplay_memory = GlyphGameplayMemory(chunk_size=args.memory_chunk_size, log_path=memory_path)
     history: list[dict[str, Any]] = []
     steps = 0
@@ -334,7 +335,9 @@ def main() -> int:
             perception=next_perception,
             tracks=update_object_tracks(object_track_state, next_perception),
             before_perception=last_object_perception, before_tracks=object_track_state,
-            navigation=navigation, explicit_progress=explicit_progress,
+            navigation=navigation,
+            run_context={"game_id": args.game_id, "seed": args.seed, "policy": args.policy},
+            explicit_progress=explicit_progress,
         )
         previous_observation = observation
         frame = next_frame
