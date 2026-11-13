@@ -208,13 +208,19 @@ def render_protocol(context: dict[str, Any] | None = None) -> dict[str, Any]:
     stages = [
         ("👁️", "observe", {"frame_id": ctx.get("frame_id"), "grid_shape": ctx.get("grid_shape")}),
         ("🔍", "segment", {"object_count": ctx.get("object_count")}),
+        ("🧩", "relate", {"relationships": ctx.get("relationships", [])}),
+        ("📐", "geometry", {"geometry_summary": ctx.get("geometry_summary")}),
         ("🧭", "orient", {"orientation": ctx.get("orientation", "unknown")}),
         ("↔️", "track", {"tracked_objects": ctx.get("tracked_objects")}),
         ("⚙️", "physics", {"motion_model": ctx.get("motion_model", "evidence_gated")}),
-        ("🔦", "attend", {"focus": ctx.get("attention_focus", ["player", "goals", "hazards"])}),
+        ("🔦", "attend", {"focus": ctx.get("attention_focus", ["player", "goals", "hazards", "unknowns"])}),
+        ("🧠", "hypothesize", {"mechanics_hypotheses": ctx.get("mechanics_hypotheses", [])}),
+        ("🔮", "predict", {"prediction_status": ctx.get("prediction_status", "not_run")}),
         ("📊", "probability", {"success_estimates": ctx.get("success_estimates", "uncalibrated")}),
         ("🏆", "reward", {"verified_rewards": ctx.get("verified_rewards", [])}),
         ("⛔", "risk", {"risk_flags": ctx.get("risk_flags", [])}),
+        ("🧮", "value", {"value_summary": ctx.get("value_summary")}),
+        ("🧪", "probe", {"probe_candidates": ctx.get("probe_candidates", [])}),
         ("🧱", "beam", {"width": ctx.get("beam_width", 12), "horizon": ctx.get("beam_horizon", 4)}),
         ("🌳", "mcts", {"depth": ctx.get("mcts_depth", 2), "simulations": ctx.get("mcts_simulations", 32)}),
         ("⚡", "parallel", {"mode": ctx.get("parallel_mode", "root")}),
@@ -224,7 +230,10 @@ def render_protocol(context: dict[str, Any] | None = None) -> dict[str, Any]:
         ("💾", "memorize", {"memory_glyph": ctx.get("memory_glyph")}),
         ("🔐", "checksum", {"scene_checksum": ctx.get("scene_checksum")}),
         ("📦", "compress", {"chunk_size": ctx.get("memory_chunk_size", 4)}),
+        ("🗃️", "memory", {"persistence": ctx.get("memory_persistence", "enabled")}),
+        ("🧬", "learn", {"learning_source": ctx.get("learning_source", "verified_observed_transitions")}),
         ("🔁", "replan", {"enabled": True}),
+        ("↩️", "undo", {"legal": bool(ctx.get("undo_legal", False))}),
     ]
     rendered = []
     for glyph, operation, fields in stages:
