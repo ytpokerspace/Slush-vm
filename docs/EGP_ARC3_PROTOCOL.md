@@ -99,6 +99,19 @@ Example override:
 
 Validation requires OBSERVE before reasoning, SELECT before ACT/UNDO, and VERIFY after an action before MEMORIZE. This prevents a predicted result from being silently stored as an observed outcome.
 
+## Dynamic action glyphs and probability scoring
+
+`arc3.action_glyph_scorer` converts every candidate supplied by the current legal action space into a structured EGP action token. Known directional actions map to arrows; click/tap actions and coordinate-bearing payloads map to 🖱️; wait/no-op maps to ⏳; undo maps to ↩️. Unknown actions map to 🎮 while preserving the exact environment action name and payload. The encoder never invents a legal action or changes its payload.
+
+Each legal candidate receives separate evidence fields:
+- **Verified progress-or-win estimate:** Beta-binomial smoothed estimate from observed outcomes.
+- **Observation-change estimate:** smoothed estimate of whether the action changed the state.
+- **Evidence scope:** exact state/action evidence when available; otherwise action-family history.
+- **Search factors:** MCTS mean value, strategy prior and a separately reported information-gain exploration bonus.
+- **Utility score:** a transparent weighted ranking heuristic, not a probability of winning.
+
+With no observations, the probability fields are prior-only and must not be interpreted as learned confidence. As outcomes accumulate, the estimates update on subsequent decisions. Exact state/action evidence takes precedence over broader action-family evidence. Only verified transitions update the world model.
+
 ## Environment execution runtime
 
 `arc3.egp_runtime.EGPEnvironmentRuntime` is the explicit bridge from a selected EGP action to the ARC environment. The runner uses it only when `--policy glyph` is selected; legacy policy behavior is unchanged. The bridge:
