@@ -50,6 +50,16 @@ class GameDynamicsMemoryTests(unittest.TestCase):
         }])
         self.assertEqual(result[0]["status"], "rejected_insufficient_evidence")
 
+    def test_bonus_detour_is_rejected_without_step_exchange_rate(self):
+        result = GameDynamicsMemory().evaluate_bonus_candidates([{
+            "score_gain": 10, "collection_probability": 0.9,
+            "extra_steps": 2, "completion_probability_before": 0.8,
+            "completion_probability_after": 0.8,
+            "action_signature": "legal-action", "evidence": "verified_history",
+        }])
+        self.assertEqual(result[0]["status"], "rejected_insufficient_evidence")
+        self.assertIn("score-to-step", result[0]["reason"])
+
     def test_zero_or_negative_net_gain_is_rejected(self):
         memory = GameDynamicsMemory(step_cost_per_step=10.0)
         result = memory.evaluate_bonus_candidates([{
