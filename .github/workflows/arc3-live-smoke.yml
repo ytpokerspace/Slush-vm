@@ -1,4 +1,5 @@
 # Live benchmark launcher: bounded to the configured game/seed/action limits.
+# Trigger fresh credential validation and the configured bounded live run.
 name: ARC-AGI-3 Live Benchmark
 
 on:
