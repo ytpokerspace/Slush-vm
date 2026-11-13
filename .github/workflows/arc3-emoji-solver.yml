@@ -31,7 +31,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Compile solver, temporal models, and optional SDK runner
-        run: python -m py_compile arc3/emoji_solver.py arc3/world_model.py arc3/hypothesis_engine.py arc3/strategy_studio.py arc3/shallow_mcts.py arc3/cognitive_agent.py arc3/arc_agi_runner.py arc3/benchmark.py arc3/visual_policy.py arc3/level_planner.py arc3/motion_planner.py arc3/object_value_planner.py arc3/object_perception.py arc3/search_dsl.py arc3/memory_partition.py arc3/frame_prediction.py arc3/frame_benchmark.py arc3/temporal_video.py arc3/video_file_pipeline.py arc3/physics_forecast.py
+        run: python -m py_compile arc3/emoji_solver.py arc3/world_model.py arc3/hypothesis_engine.py arc3/strategy_studio.py arc3/shallow_mcts.py arc3/cognitive_agent.py arc3/arc_agi_runner.py arc3/ls20_planner.py arc3/benchmark.py arc3/visual_policy.py arc3/level_planner.py arc3/motion_planner.py arc3/object_value_planner.py arc3/object_perception.py arc3/search_dsl.py arc3/memory_partition.py arc3/frame_prediction.py arc3/frame_benchmark.py arc3/temporal_video.py arc3/video_file_pipeline.py arc3/physics_forecast.py
       - name: Unit tests
         run: python -m unittest discover -s tests -p 'test_arc3_*.py' -v
       - name: CLI smoke test
@@ -48,9 +48,10 @@ jobs:
           grep -q "Missing optional dependency:" runner-output.txt
 
   live-benchmark:
+    # PRs run offline checks only; live benchmark requires explicit opt-in.
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_live == true }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -61,7 +62,7 @@ jobs:
       - name: Run bounded live episode and preserve report
         run: |
           set +e
-          python -m arc3.benchmark --games ls20 --seeds 0 --max-actions 12 --max-click-points 8 --run-timeout 120 --output arc3-benchmark.json > arc3-benchmark.log 2>&1
+          python -m arc3.benchmark --games ls20 --seeds 0 --max-actions 256 --max-click-points 32 --run-timeout 600 --output arc3-benchmark.json > arc3-benchmark.log 2>&1
           status=$?
           cat arc3-benchmark.log
           if [ ! -f arc3-benchmark.json ]; then

@@ -7,11 +7,17 @@ from __future__ import annotations
 
 import argparse
 import json
+import statistics
+import time
 from enum import Enum
+from pathlib import Path
 from typing import Any
+
+from arc3.config_validation import DEFAULT_CONFIG, load_config, validate_solver_compatibility
 
 from arc3.cognitive_agent import Arc3CognitiveAgent
 from arc3.level_planner import LevelPlanningMemory
+from arc3.ls20_planner import infer_ls20_plan
 from arc3.motion_planner import forecast_motion
 from arc3.object_perception import perceive_objects
 from arc3.object_tracker import update_object_tracks
@@ -199,9 +205,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--game-id", default="ls20", help="ARC-AGI-3 game id (default: ls20)")
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--max-actions", type=int, default=100)
-    parser.add_argument("--mcts-depth", type=int, default=3, help="Shallow planning depth (default: 3)")
-    parser.add_argument("--mcts-simulations", type=int, default=32, help="MCTS simulations per decision (default: 32)")
+    parser.add_argument("--max-actions", type=int, default=256)
+    parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG, help="Validated Hyper Pipeline JSON profile")
+    parser.add_argument("--mcts-depth", type=int, default=None, help="Override configured MCTS depth")
+    parser.add_argument("--mcts-simulations", type=int, default=None, help="Override configured MCTS simulations")
     parser.add_argument("--click-x", type=int, default=32, help="Center/fallback x coordinate")
     parser.add_argument("--click-y", type=int, default=32, help="Center/fallback y coordinate")
     parser.add_argument("--click-strategy", choices=("foreground", "scan", "center"), default="foreground")
@@ -209,6 +216,23 @@ def main() -> int:
     parser.add_argument("--render-mode", choices=("terminal", "terminal-fast", "human"))
     parser.add_argument("--save-recording", action="store_true")
     args = parser.parse_args()
+
+    try:
+        config = load_config(args.config)
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        parser.error(f"could not load --config: {exc}")
+    compatibility_errors = validate_solver_compatibility(config)
+    if compatibility_errors:
+        parser.error("configuration/agent mismatch: " + "; ".join(compatibility_errors))
+    solver_config = config.get("arc_solver", {})
+    if not isinstance(solver_config, dict) or solver_config.get("enabled") is not True:
+        parser.error("configuration must enable arc_solver")
+    mcts_config = solver_config.get("mcts", {})
+    if not isinstance(mcts_config, dict) or mcts_config.get("enabled") is not True:
+        parser.error("configuration must enable arc_solver.mcts")
+    args.mcts_depth = mcts_config["default_depth"] if args.mcts_depth is None else args.mcts_depth
+    args.mcts_simulations = mcts_config["default_simulations"] if args.mcts_simulations is None else args.mcts_simulations
+    mcts_exploration = float(mcts_config.get("exploration_constant", 1.25))
 
     if args.max_actions < 1:
         parser.error("--max-actions must be at least 1")
@@ -246,12 +270,17 @@ def main() -> int:
     agent = Arc3CognitiveAgent(
         mcts_depth=args.mcts_depth,
         mcts_simulations=args.mcts_simulations,
+        mcts_exploration=mcts_exploration,
     )
     planning_memory = LevelPlanningMemory()
     history: list[dict[str, Any]] = []
     steps = 0
+    decision_latencies_ms: list[float] = []
+    action_latencies_ms: list[float] = []
+    episode_started = time.perf_counter()
     navigation_steps = 0
     last_navigation = None
+    last_ls20_plan = None
     previous_observation = None
     last_motion_forecast = None
     last_object_perception = None
@@ -264,7 +293,12 @@ def main() -> int:
             legal, observation, args.click_strategy, args.click_x, args.click_y,
             args.max_click_points, previous_observation,
         )
-        navigation = infer_navigation(observation)
+        ls20_plan = infer_ls20_plan(observation) if args.game_id.lower() == "ls20" else None
+        if ls20_plan is not None:
+            navigation = ls20_plan.get("navigation")
+        else:
+            navigation = infer_navigation(observation)
+        last_ls20_plan = ls20_plan
         last_object_perception = perceive_objects(observation)
         object_track_state = update_object_tracks(object_track_state, last_object_perception)
         planning_memory.partitions["object_perception"] = last_object_perception
@@ -276,7 +310,9 @@ def main() -> int:
         planning_memory.partitions["motion_forecast"] = last_motion_forecast
         action_records = score_navigation_candidates(action_records, navigation)
         last_navigation = navigation
+        decision_started = time.perf_counter()
         result = agent.select_action(observation, action_records, navigation)
+        decision_latencies_ms.append((time.perf_counter() - decision_started) * 1000.0)
         if result["action"] is None:
             terminal = "no_legal_actions"
             break
@@ -294,19 +330,36 @@ def main() -> int:
         if navigation is not None and selected_name == navigation.get("action"):
             navigation_steps += 1
         history.append({
-            "observation": observation,
+            "step": steps + 1,
+            "observation": {
+                "frame": observation.get("frame"),
+                "__arc3_state": observation.get("__arc3_state"),
+                "__arc3_levels_completed": observation.get("__arc3_levels_completed"),
+                "__arc3_win_levels": observation.get("__arc3_win_levels"),
+            },
+            "legal_actions": [
+                getattr(action, "name", str(action)) for action in legal
+            ],
             "action": selected_record,
             "navigation": navigation,
+            "ls20_plan": ls20_plan,
         })
         action_data = selected_record.get("data") if selected.is_complex() else None
         if selected.is_complex() and not isinstance(action_data, dict):
             action_data = {"x": args.click_x, "y": args.click_y}
+        action_started = time.perf_counter()
         next_frame = env.step(selected, data=action_data)
+        action_latencies_ms.append((time.perf_counter() - action_started) * 1000.0)
         steps += 1
         if next_frame is None:
             terminal = "environment_returned_no_observation"
             break
         next_observation = frame_observation(next_frame)
+        history[-1]["transition"] = {
+            "observation_changed": observation != next_observation,
+            "state_after": next_observation.get("__arc3_state"),
+            "levels_completed_after": next_observation.get("__arc3_levels_completed"),
+        }
         planning_memory.record_action(selected_record, observation, next_observation)
         agent.record_transition(selected_record, observation, next_observation)
         previous_observation = observation
@@ -333,17 +386,30 @@ def main() -> int:
         "seed": args.seed,
         "steps": steps,
         "terminal": terminal,
+        "elapsed_seconds": round(time.perf_counter() - episode_started, 6),
+        "decision_latency_ms": {
+            "mean": round(statistics.fmean(decision_latencies_ms), 4) if decision_latencies_ms else None,
+            "median": round(statistics.median(decision_latencies_ms), 4) if decision_latencies_ms else None,
+            "p95": round(sorted(decision_latencies_ms)[min(len(decision_latencies_ms) - 1, int(0.95 * len(decision_latencies_ms)))], 4) if decision_latencies_ms else None,
+        },
+        "environment_step_latency_ms": {
+            "mean": round(statistics.fmean(action_latencies_ms), 4) if action_latencies_ms else None,
+            "median": round(statistics.median(action_latencies_ms), 4) if action_latencies_ms else None,
+        },
         "won": terminal == "win",
         "execution_succeeded": runner_exit_code(steps, terminal) == 0,
         "levels_completed": getattr(frame, "levels_completed", None),
         "win_levels": getattr(frame, "win_levels", None),
-        "policy": "ARC-AGI-3 strategy brainstorming plus shallow MCTS over observed transitions",
+        "policy": "ARC-AGI-3 observation-based planning plus strategy brainstorming and shallow MCTS",
         "search_configuration": {
             "depth": args.mcts_depth,
             "simulations_per_decision": args.mcts_simulations,
+            "exploration_constant": mcts_exploration,
+            "config": str(args.config),
         },
         "navigation_steps": navigation_steps,
         "last_navigation": last_navigation,
+        "last_ls20_plan": last_ls20_plan,
         "planning_memory": planning_memory.snapshot(),
         "cognitive_agent": agent.snapshot(),
         "motion_forecast": last_motion_forecast,
@@ -351,6 +417,9 @@ def main() -> int:
         "object_tracks": object_track_state,
         "click_strategy": args.click_strategy,
         "scorecard": scorecard,
+        "trace_schema_version": 1,
+        "action_trace": history,
+        "final_observation": frame_observation(frame),
         "last_state": frame_observation(frame).get("__arc3_state"),
     }, ensure_ascii=False))
     # A run may finish without winning, but a missing step observation is failure.
