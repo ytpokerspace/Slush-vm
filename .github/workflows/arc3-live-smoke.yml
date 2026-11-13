@@ -1,3 +1,4 @@
+# Live benchmark launcher: bounded to the configured game/seed/action limits.
 name: ARC-AGI-3 Live Benchmark
 
 on:
