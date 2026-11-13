@@ -14,7 +14,10 @@ class GlyphDslTests(unittest.TestCase):
         self.assertEqual(by_operation["compress"]["parameters"]["glyphs_are_lossless"], False)
 
     def test_protocol_parses_parameter_overrides(self):
-        program = parse_program("EGP {\\n👁️ OBSERVE(frame)\\n🧱 BEAM(width=7,horizon=3)\\n}")
+        program = parse_program("""EGP {
+👁️ OBSERVE(frame)
+🧱 BEAM(width=7,horizon=3)
+}""")
         compiled = compile_program(program)
         beam = next(item for item in compiled if item["operation"] == "beam")
         self.assertEqual(beam["parameters"]["width"], 7)
