@@ -199,12 +199,11 @@ def main() -> int:
                 results.append(result)
                 print(json.dumps(result, ensure_ascii=False), flush=True)
 
-    report = summarize_results(results)
-    comparison = summarize_policy_comparison(results)
-    report.update({
+    report = {
         "created_at": datetime.now(timezone.utc).isoformat(),
-        "policy": policies,
-        "comparison": comparison,
+        "aggregate_all_policy_runs": summarize_results(results),
+        "policies": policies,
+        "comparison": summarize_policy_comparison(results),
         "click_strategy": args.click_strategy,
         "max_actions_per_run": args.max_actions,
         "games": games,
