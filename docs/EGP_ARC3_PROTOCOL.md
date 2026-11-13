@@ -154,3 +154,24 @@ Defaults are initial engineering settings, not benchmark-proven optima:
 - A success estimate is not calibrated merely because it is represented as a probability.
 - The DSL defines contracts and dynamic rendering. It does not imply that every listed operation is already connected to a production-quality implementation.
 - Benchmark performance must be measured separately against identical games, seeds and action budgets.
+
+
+## Separate game-dynamics memory and conservative bonus gating
+
+`arc3.game_dynamics_memory.GameDynamicsMemory` is an additional memory partition. It does not replace or mutate the world model, exact transition learner, or checksummed hierarchical gameplay log. It records predicted-versus-observed object-position comparisons as a separate history.
+
+The current one-step object forecast extrapolates each visible track's last observed displacement. It is explicitly heuristic, not a learned action-conditioned physics model or calibrated probability. Actual next-frame positions are compared against forecasts; only actual frames remain observations.
+
+Bonus candidates are evaluated only when the caller supplies:
+- a measurable positive score gain;
+- evidence-backed collection probability;
+- extra-step count;
+- completion probability before and after the detour;
+- the signature of the legal action that starts the bonus route; and
+- provenance marked `verified_history` or `environment_metadata`.
+
+A detour is rejected if it lowers estimated completion probability, has no measurable net gain, lacks evidence, or has extra steps without a configured score-to-step exchange rate. The exchange rate defaults to unset rather than inventing a scoring conversion. A viable bonus route receives only a small capped preference among already-legal actions; it cannot create actions or bypass the environment action space.
+
+The runner currently reads optional `__arc3_bonus_candidates` observation metadata. Generic object perception does not identify a bonus by color or shape alone. If a game supplies no bonus metadata and no verified bonus history, the correct behavior is to skip bonus pursuit rather than guess.
+
+This addition does not yet provide a generalized shortest-path solver for arbitrary ARC game mechanics. Existing navigation cues and bounded search remain in place; full minimum-step planning requires game-specific movement, collision, goal and reward semantics to be established from observations or explicit environment metadata.
