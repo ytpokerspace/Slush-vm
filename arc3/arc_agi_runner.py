@@ -12,6 +12,7 @@ from typing import Any
 
 from arc3.cognitive_agent import Arc3CognitiveAgent
 from arc3.glyph_agent import GlyphArc3Agent
+from arc3.glyph_game_memory import GlyphGameplayMemory
 from arc3.level_planner import LevelPlanningMemory
 from arc3.motion_planner import forecast_motion
 from arc3.object_perception import perceive_objects
@@ -210,6 +211,9 @@ def main() -> int:
     parser.add_argument("--max-click-points", type=int, default=32)
     parser.add_argument("--render-mode", choices=("terminal", "terminal-fast", "human"))
     parser.add_argument("--save-recording", action="store_true")
+    parser.add_argument("--memory-log", default=None, help="JSONL gameplay-memory path (default: arc3_memory/<game-id>.jsonl)")
+    parser.add_argument("--no-persistent-memory", action="store_true", help="Keep gameplay memory in RAM only")
+    parser.add_argument("--memory-chunk-size", type=int, default=4, help="Observed transitions per glyph summary")
     args = parser.parse_args()
 
     if args.max_actions < 1:
@@ -222,6 +226,8 @@ def main() -> int:
         parser.error("click coordinates must be between 0 and 63")
     if not (1 <= args.max_click_points <= 4096):
         parser.error("--max-click-points must be between 1 and 4096")
+    if args.memory_chunk_size < 1:
+        parser.error("--memory-chunk-size must be at least 1")
 
     try:
         import arc_agi
@@ -253,6 +259,8 @@ def main() -> int:
             mcts_simulations=args.mcts_simulations,
         )
     planning_memory = LevelPlanningMemory()
+    memory_path = None if args.no_persistent_memory else (args.memory_log or f"arc3_memory/{args.game_id}.jsonl")
+    gameplay_memory = GlyphGameplayMemory(chunk_size=args.memory_chunk_size, log_path=memory_path)
     history: list[dict[str, Any]] = []
     steps = 0
     navigation_steps = 0
@@ -314,6 +322,18 @@ def main() -> int:
         next_observation = frame_observation(next_frame)
         planning_memory.record_action(selected_record, observation, next_observation)
         agent.record_transition(selected_record, observation, next_observation)
+        next_perception = perceive_objects(next_observation)
+        before_levels = observation.get("__arc3_levels_completed")
+        after_levels = next_observation.get("__arc3_levels_completed")
+        explicit_progress = (
+            isinstance(before_levels, int) and isinstance(after_levels, int)
+            and after_levels > before_levels
+        )
+        gameplay_memory.record_transition(
+            selected_record, observation, next_observation,
+            perception=next_perception, navigation=navigation,
+            explicit_progress=explicit_progress,
+        )
         previous_observation = observation
         frame = next_frame
         state = getattr(frame, "state", None)
@@ -325,6 +345,7 @@ def main() -> int:
             terminal = "game_over"
             break
 
+    gameplay_memory.flush()
     scorecard = None
     try:
         score = arcade.close_scorecard()
@@ -351,6 +372,7 @@ def main() -> int:
         "navigation_steps": navigation_steps,
         "last_navigation": last_navigation,
         "planning_memory": planning_memory.snapshot(),
+        "gameplay_memory": gameplay_memory.snapshot(),
         "cognitive_agent": agent.snapshot(),
         "motion_forecast": last_motion_forecast,
         "object_perception": last_object_perception,
