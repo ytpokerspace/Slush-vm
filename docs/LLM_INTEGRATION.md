@@ -88,3 +88,8 @@ CI checks the pinned ARC-2 adapter and all local conformance tests. The tests ar
 3. Recover the ARC-AGI-3 observation/action/state protocol from the live solver source before implementing a game policy.
 4. Compare runtime tool schemas with a real MCP host and document a tested client configuration.
 5. Add dataset-backed ARC-2 held-out evaluation only as a separate, explicitly authorized benchmark run.
+
+## Copyright and license
+
+The original host-side capability runtime implementation and its tests under `runtime/` are Copyright (c) 2026 William Gunnell Cox and are licensed under the MIT License. See [runtime/LICENSE](../runtime/LICENSE). This grant applies only to the original files in that directory that identify MIT licensing; it does not relicense the repository's existing files, the root GPL-3.0 license, separately maintained ARC-2 code, dependencies, or third-party contributions. Their own notices and license terms continue to apply.
+
