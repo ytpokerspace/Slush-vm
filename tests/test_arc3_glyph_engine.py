@@ -1,6 +1,6 @@
 import unittest
 from arc3.belief_mcts import BeliefMCTS
-from arc3.glyph_dsl import (DEFAULT_PROGRAM, DSLParseError, compile_program, parse_program, render_protocol, validate_program)
+from arc3.glyph_dsl import (DEFAULT_PROGRAM, GLYPHS, DSLParseError, compile_program, parse_program, render_protocol, validate_program)
 from arc3.transition_learner import TransitionLearner
 from arc3.world_model import WorldModel
 
@@ -29,7 +29,7 @@ class GlyphDslTests(unittest.TestCase):
         self.assertEqual(rendered["stages"][0]["fields"]["grid_shape"], [12, 12])
         select_stage = next(stage for stage in rendered["stages"] if stage["operation"] == "select")
         self.assertEqual(select_stage["fields"]["legal_action_count"], 3)
-        self.assertEqual(len(rendered["stages"]), len(__import__("arc3.glyph_dsl", fromlist=["GLYPHS"]).GLYPHS))
+        self.assertEqual(len(rendered["stages"]), len(GLYPHS))
         self.assertEqual(len(rendered["context_sha256"]), 64)
 
     def test_unknown_glyph_rejected(self):
