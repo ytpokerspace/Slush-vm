@@ -113,6 +113,7 @@ class WorldModel:
     max_history: int = 256
     state_visits: Counter[str] = field(default_factory=Counter)
     action_effects: dict[str, ActionEffectStats] = field(default_factory=dict)
+    action_signature_effects: dict[str, ActionEffectStats] = field(default_factory=dict)
     exact_transitions: dict[str, str] = field(default_factory=dict)
     transition_history: list[dict[str, Any]] = field(default_factory=list)
     max_states: int = 128
@@ -185,6 +186,7 @@ class WorldModel:
         after_key = state_signature(after)
         family = action_family(action)
         stats = self.action_effects.setdefault(family, ActionEffectStats())
+        exact_stats = self.action_signature_effects.setdefault(action_signature(action), ActionEffectStats())
         changed = before_key != after_key
         progress_before = before.get("__arc3_levels_completed") if isinstance(before, dict) else None
         progress_after = after.get("__arc3_levels_completed") if isinstance(after, dict) else None
@@ -200,6 +202,12 @@ class WorldModel:
         stats.novel_next_states += int(changed and not next_was_seen)
         stats.explicit_progress += int(progress)
         stats.terminal_wins += int(terminal)
+        exact_stats.attempts += 1
+        exact_stats.changed += int(changed)
+        exact_stats.unchanged += int(not changed)
+        exact_stats.novel_next_states += int(changed and not next_was_seen)
+        exact_stats.explicit_progress += int(progress)
+        exact_stats.terminal_wins += int(terminal)
         event = {
             "action": action,
             "action_family": family,
@@ -238,6 +246,15 @@ class WorldModel:
             "terminal_wins": 0, "recent": [],
         }
 
+    def action_signature_stats(self, action: Any) -> dict[str, Any]:
+        """Return episode-wide outcomes for this exact action, including click data."""
+        stats = self.action_signature_effects.get(action_signature(action))
+        return stats.snapshot() if stats else {
+            "attempts": 0, "changed": 0, "unchanged": 0,
+            "novel_next_states": 0, "explicit_progress": 0,
+            "terminal_wins": 0, "recent": [],
+        }
+
     def predict_exact(self, observation: Any, action: Any) -> str | None:
         """Return a next-state signature only for an exactly observed state/action pair."""
         key = self._edge_key(state_signature(observation), action)
@@ -251,5 +268,6 @@ class WorldModel:
             "observed_transition_edges": len(self.transition_counts),
             "transition_count": len(self.transition_history),
             "action_effects": {key: value.snapshot() for key, value in self.action_effects.items()},
+            "action_signature_effects": {key: value.snapshot() for key, value in self.action_signature_effects.items()},
             "recent_transitions": list(self.transition_history[-20:]),
         }

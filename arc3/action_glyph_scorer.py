@@ -84,24 +84,48 @@ class ActionProbabilityScorer:
         for index, action in enumerate(action_records):
             signature = action_signature(action)
             edge = world_model.edge_stats_by_ids(state_id, action)
-            attempts = int(edge.get("attempts", 0))
-            progress = int(edge.get("verified_progress_or_win", 0))
-            changed = int(edge.get("changed", 0))
-            wins = int(edge.get("terminal_wins", 0))
-            evidence_scope = "exact_state_action"
-            if attempts == 0:
-                # The exact state may be new every turn. Use action-family history
-                # as weaker prior evidence, while labeling that scope explicitly.
-                family = world_model.action_stats(action)
-                attempts = int(family.get("attempts", 0))
-                progress = min(attempts, int(family.get("explicit_progress", 0)) + int(family.get("terminal_wins", 0)))
+            family = world_model.action_stats(action)
+            exact_history = world_model.action_signature_stats(action)
+            family_attempts = int(family.get("attempts", 0))
+            family_progress = int(family.get("explicit_progress", 0)) + int(family.get("terminal_wins", 0))
+            exact_attempts = int(exact_history.get("attempts", 0))
+            exact_progress = int(exact_history.get("explicit_progress", 0)) + int(exact_history.get("terminal_wins", 0))
+            # Exact action history includes click coordinates and survives changing
+            # screen states; family history generalizes across coordinates.
+            if exact_attempts:
+                attempts = exact_attempts
+                progress = exact_progress
+                changed = int(exact_history.get("changed", 0))
+                wins = int(exact_history.get("terminal_wins", 0))
+                evidence_scope = "exact_action_history"
+            elif family_attempts:
+                attempts = family_attempts
+                progress = family_progress
                 changed = int(family.get("changed", 0))
                 wins = int(family.get("terminal_wins", 0))
                 evidence_scope = "action_family"
+            else:
+                attempts = int(edge.get("attempts", 0))
+                progress = int(edge.get("verified_progress_or_win", 0))
+                changed = int(edge.get("changed", 0))
+                wins = int(edge.get("terminal_wins", 0))
+                evidence_scope = "exact_state_action"
             p_progress = (progress + self.alpha) / (attempts + self.alpha + self.beta)
             p_change = (changed + self.alpha) / (attempts + self.alpha + self.beta)
-            # Exploration is explicitly a value bonus, not a success probability.
-            information_bonus = self.exploration_weight / math.sqrt(attempts + 1)
+            # Reward trying new legal actions/coordinates. A changed screen alone
+            # is weak evidence and cannot outweigh repeated lack of progress.
+            information_bonus = (
+                self.exploration_weight / math.sqrt(exact_attempts + 1)
+                + 0.12 / math.sqrt(family_attempts + 1)
+            )
+            stagnation_penalty = (
+                min(0.30, 0.075 * family_attempts)
+                if family_attempts >= 2 and family_progress == 0 else 0.0
+            )
+            repeat_penalty = (
+                min(0.36, 0.30 * exact_attempts)
+                if exact_attempts >= 1 and exact_progress == 0 else 0.0
+            )
             strategy_prior = max(0.0, float(strategy_priors.get(signature, 0.0)))
             mcts = mcts_by_signature.get(signature, {})
             mcts_value = float(mcts.get("mean_value", 0.5))
@@ -109,11 +133,13 @@ class ActionProbabilityScorer:
             # Ranking utility is a transparent weighted heuristic. The separate
             # posterior fields remain interpretable and are not called win odds.
             utility = (
-                0.60 * p_progress
-                + 0.15 * p_change
+                0.65 * p_progress
+                + 0.05 * p_change
                 + 0.15 * min(1.0, mcts_value)
-                + 0.10 * min(1.0, strategy_prior)
+                + 0.15 * min(1.0, strategy_prior)
                 + information_bonus
+                - stagnation_penalty
+                - repeat_penalty
             )
             encoded = encode_action(action)
             output.append({
@@ -134,6 +160,12 @@ class ActionProbabilityScorer:
                     "mcts_visits": mcts_visits,
                     "strategy_prior": round(strategy_prior, 6),
                     "information_bonus": round(information_bonus, 6),
+                    "stagnation_penalty": round(stagnation_penalty, 6),
+                    "repeat_penalty": round(repeat_penalty, 6),
+                    "family_attempts": family_attempts,
+                    "exact_action_attempts": exact_attempts,
+                    "family_confirmed_progress": family_progress,
+                    "exact_action_confirmed_progress": exact_progress,
                     "utility_score": round(utility, 6),
                 },
             })
