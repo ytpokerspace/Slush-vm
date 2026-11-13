@@ -37,7 +37,7 @@ class GameDynamicsMemory:
     """Track forecast accuracy and evaluate only explicitly evidenced bonus routes."""
 
     max_records: int = 256
-    step_cost_per_step: float = 0.0
+    step_cost_per_step: float | None = None
     minimum_net_bonus_gain: float = 0.0
     records: list[dict[str, Any]] = field(default_factory=list)
     pending_predictions: dict[str, dict[str, list[float]]] = field(default_factory=dict)
@@ -106,6 +106,13 @@ class GameDynamicsMemory:
                 or not isinstance(signature, str) or not signature
                 or evidence not in {"verified_history", "environment_metadata"}
             ):
+            if extra_steps > 0 and self.step_cost_per_step is None:
+                results.append({
+                    "status": "rejected_insufficient_evidence",
+                    "reason": "No configured score-to-step exchange rate; extra-step opportunity cost cannot be measured.",
+                    "action_signature": signature,
+                })
+                continue
                 results.append({
                     "status": "rejected_insufficient_evidence",
                     "reason": "Requires measurable reward, collection odds, extra steps, completion odds, legal-action signature and evidence provenance.",
@@ -120,7 +127,7 @@ class GameDynamicsMemory:
                 })
                 continue
             expected_gain = float(gain) * float(probability)
-            step_cost = int(extra_steps) * max(0.0, float(self.step_cost_per_step))
+            step_cost = int(extra_steps) * max(0.0, float(self.step_cost_per_step or 0.0))
             net_gain = expected_gain - step_cost
             if net_gain <= self.minimum_net_bonus_gain:
                 results.append({
