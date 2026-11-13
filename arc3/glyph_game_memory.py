@@ -224,12 +224,17 @@ class GlyphGameplayMemory:
             return None
         rows = self._pending_chunks
         self._pending_chunks = []
+        action_outcomes: dict[str, Counter[str]] = {}
+        for row in rows:
+            for action, outcomes in row.get("action_outcomes", {}).items():
+                action_outcomes.setdefault(action, Counter()).update(outcomes)
         core = {
             "first_step": rows[0]["first_step"],
             "last_step": rows[-1]["last_step"],
             "chunk_checksums": [row["checksum"] for row in rows],
             "outcomes": dict(sorted(sum_counters(row["outcomes"] for row in rows).items())),
             "actions": dict(sorted(sum_counters(row["actions"] for row in rows).items())),
+            "action_outcomes": {name: dict(sorted(counts.items())) for name, counts in sorted(action_outcomes.items())},
         }
         checksum = _digest(core)
         rollup = {
