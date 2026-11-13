@@ -141,6 +141,7 @@ class GlyphGameplayMemory:
                           before_perception: dict[str, Any] | None = None,
                           before_tracks: dict[str, Any] | None = None,
                           navigation: dict[str, Any] | None = None,
+                          run_context: dict[str, Any] | None = None,
                           explicit_progress: bool = False) -> dict[str, Any]:
         """Record one observed transition; predicted states must never be passed as observations."""
         self.step_count += 1
@@ -166,6 +167,11 @@ class GlyphGameplayMemory:
             "outcome": outcome,
             "explicit_progress": bool(explicit_progress),
             "navigation_target": (navigation or {}).get("target_center"),
+            "run_context": dict(run_context or {}),
+            "before_state": before.get("__arc3_state") if isinstance(before, dict) else None,
+            "after_state": after.get("__arc3_state") if isinstance(after, dict) else None,
+            "levels_completed_before": before.get("__arc3_levels_completed") if isinstance(before, dict) else None,
+            "levels_completed_after": after.get("__arc3_levels_completed") if isinstance(after, dict) else None,
         }
         event_id = _digest(event_core)
         event = {
