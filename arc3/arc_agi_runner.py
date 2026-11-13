@@ -292,7 +292,18 @@ def main() -> int:
         planning_memory.partitions["motion_forecast"] = last_motion_forecast
         action_records = score_navigation_candidates(action_records, navigation)
         last_navigation = navigation
-        result = agent.select_action(observation, action_records, navigation)
+        if args.policy == "glyph":
+            result = agent.select_action(
+                observation, action_records, navigation,
+                dynamics_context={
+                    "object_tracks": object_track_state,
+                    "motion_forecast": last_motion_forecast,
+                    # Only explicit game metadata may identify bonus opportunities.
+                    "bonus_candidates": observation.get("__arc3_bonus_candidates", []),
+                },
+            )
+        else:
+            result = agent.select_action(observation, action_records, navigation)
         if result["action"] is None:
             terminal = "no_legal_actions"
             break
@@ -332,6 +343,11 @@ def main() -> int:
         planning_memory.record_action(selected_record, observation, next_observation)
         agent.record_transition(selected_record, observation, next_observation)
         next_perception = perceive_objects(next_observation)
+        next_track_state = update_object_tracks(object_track_state, next_perception)
+        if args.policy == "glyph":
+            agent.dynamics_memory.record_transition(
+                observation, next_observation, object_track_state, next_track_state
+            )
         before_levels = observation.get("__arc3_levels_completed")
         after_levels = next_observation.get("__arc3_levels_completed")
         explicit_progress = (
@@ -341,7 +357,7 @@ def main() -> int:
         gameplay_memory.record_transition(
             selected_record, observation, next_observation,
             perception=next_perception,
-            tracks=update_object_tracks(object_track_state, next_perception),
+            tracks=next_track_state,
             before_perception=last_object_perception, before_tracks=object_track_state,
             navigation=navigation,
             run_context={"game_id": args.game_id, "seed": args.seed, "policy": args.policy},
