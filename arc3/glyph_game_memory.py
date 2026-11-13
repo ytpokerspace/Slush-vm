@@ -183,6 +183,9 @@ class GlyphGameplayMemory:
         self._pending = []
         outcomes = Counter(row["outcome"] for row in rows)
         actions = Counter(row["action"] for row in rows)
+        action_outcomes: dict[str, Counter[str]] = {}
+        for row in rows:
+            action_outcomes.setdefault(row["action"], Counter())[row["outcome"]] += 1
         positions = [row.get("objects", []) for row in rows]
         core = {
             "first_step": rows[0]["step"],
@@ -190,6 +193,7 @@ class GlyphGameplayMemory:
             "event_ids": [row["event_id"] for row in rows],
             "outcomes": dict(sorted(outcomes.items())),
             "actions": dict(sorted(actions.items())),
+            "action_outcomes": {name: dict(sorted(counts.items())) for name, counts in sorted(action_outcomes.items())},
             "scene_sequence": [row["after_scene"] for row in rows],
             "position_sequence": positions,
             "worked": outcomes.get("verified_win", 0) + outcomes.get("verified_progress", 0),
