@@ -1,3 +1,6 @@
+# Copyright (c) 2026 William Gunnell Cox
+# SPDX-License-Identifier: MIT
+
 import base64
 import hashlib
 import unittest
