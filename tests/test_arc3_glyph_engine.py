@@ -1,10 +1,36 @@
 import unittest
 from arc3.belief_mcts import BeliefMCTS
-from arc3.glyph_dsl import DEFAULT_PROGRAM, DSLParseError, parse_program, validate_program
+from arc3.glyph_dsl import (DEFAULT_PROGRAM, DSLParseError, compile_program, parse_program, render_protocol, validate_program)
 from arc3.transition_learner import TransitionLearner
 from arc3.world_model import WorldModel
 
 class GlyphDslTests(unittest.TestCase):
+    def test_protocol_compiles_typed_defaults(self):
+        compiled = compile_program(parse_program(DEFAULT_PROGRAM))
+        by_operation = {item["operation"]: item for item in compiled}
+        self.assertEqual(by_operation["beam"]["parameters"]["width"], 12)
+        self.assertEqual(by_operation["mcts"]["parameters"]["depth"], 2)
+        self.assertTrue(by_operation["act"]["side_effect"])
+        self.assertEqual(by_operation["compress"]["parameters"]["glyphs_are_lossless"], False)
+
+    def test_protocol_parses_parameter_overrides(self):
+        program = parse_program("EGP {\\n👁️ OBSERVE(frame)\\n🧱 BEAM(width=7,horizon=3)\\n}")
+        compiled = compile_program(program)
+        beam = next(item for item in compiled if item["operation"] == "beam")
+        self.assertEqual(beam["parameters"]["width"], 7)
+        self.assertEqual(beam["parameters"]["horizon"], 3)
+
+    def test_dynamic_renderer_includes_runtime_context(self):
+        rendered = render_protocol({"grid_shape": [12, 12], "legal_action_count": 3, "mcts_depth": 2})
+        self.assertIn("👁️", rendered["glyph_stream"])
+        self.assertEqual(rendered["stages"][0]["fields"]["grid_shape"], [12, 12])
+        self.assertEqual(rendered["stages"][12]["fields"]["legal_action_count"], 3)
+        self.assertEqual(len(rendered["context_sha256"]), 64)
+
+    def test_unknown_glyph_rejected(self):
+        with self.assertRaises(DSLParseError):
+            parse_program("👽 UNKNOWN(x)")
+
     def test_default_program_parses(self):
         program = parse_program(DEFAULT_PROGRAM)
         validate_program(program)
