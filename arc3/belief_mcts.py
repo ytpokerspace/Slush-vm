@@ -45,7 +45,8 @@ class BeliefMCTS:
                 key = action_signature(action)
                 item = stats[key]
                 prior = max(1e-6, float(priors.get(key, 1.0 / len(legal_actions))))
-                return item["value"] / item["visits"] if item["visits"] else 0.0 + (
+                mean_value = item["value"] / item["visits"] if item["visits"] else 0.0
+                return mean_value + (
                     self.exploration * prior * math.sqrt(total + 1) / (1 + item["visits"])
                 )
             action = max(legal_actions, key=score)
