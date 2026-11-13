@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from math import hypot
 from typing import Any
 
+from arc3.object_perception import perceive_objects
 from arc3.world_model import action_signature, state_signature
 
 
@@ -151,19 +152,61 @@ class GameDynamicsMemory:
             })
         return results
 
+    def predict_action_outcomes(
+        self, observation: Any, legal_actions: list[Any], transition_model: Any,
+    ) -> list[dict[str, Any]]:
+        """Predict candidate-specific next scenes only from matching observed templates."""
+        rows = []
+        for action in legal_actions:
+            predictions = transition_model.predict(action, observation, limit=2) if transition_model else []
+            outcomes = []
+            for prediction in predictions:
+                predicted_observation = prediction.get("observation")
+                perception = perceive_objects(predicted_observation)
+                outcomes.append({
+                    "predicted_objects": [
+                        {
+                            "center": obj.get("center"),
+                            "bbox": obj.get("bbox"),
+                            "shape": obj.get("shape"),
+                            "dominant_color": obj.get("dominant_color"),
+                        }
+                        for obj in perception.get("objects", [])
+                    ],
+                    "support_count": prediction.get("support_count", 0),
+                    "confidence_proxy": prediction.get("confidence_proxy", 0.0),
+                    "evidence": prediction.get("evidence", "unknown"),
+                    "prediction_is_observation": False,
+                })
+            rows.append({
+                "action_signature": action_signature(action),
+                "action_name": action.get("name", "unknown") if isinstance(action, dict) else str(action),
+                "prediction_count": len(outcomes),
+                "outcomes": outcomes,
+                "status": "observed_template_prediction" if outcomes else "no_matching_observed_template",
+            })
+        return rows
+
     def analyze(
         self,
         tracks: dict[str, Any] | None,
         motion_forecast: dict[str, Any] | None,
         bonus_candidates: list[dict[str, Any]] | None = None,
+        observation: Any = None,
+        legal_actions: list[Any] | None = None,
+        transition_model: Any = None,
     ) -> dict[str, Any]:
         self.decisions += 1
         dynamics = self.predict_object_positions(tracks, motion_forecast)
+        action_predictions = self.predict_action_outcomes(
+            observation, legal_actions or [], transition_model
+        ) if observation is not None else []
         bonuses = self.evaluate_bonus_candidates(bonus_candidates)
         viable = [row for row in bonuses if row.get("status") == "viable"]
         return {
             "decision": self.decisions,
             "object_dynamics": dynamics,
+            "action_conditioned_predictions": action_predictions,
             "bonus_evaluations": bonuses,
             "viable_bonus_action_signatures": [row["action_signature"] for row in viable],
             "bonus_policy": "pursue only evidenced positive net gain with no reduction in completion probability",
