@@ -51,6 +51,7 @@ class GlyphArc3Agent:
             observation=observation,
             legal_actions=legal_actions,
             transition_model=self.transition_model,
+            world_model=self.world_model,
         )
         viable_bonus = {
             row["action_signature"]: row
@@ -59,16 +60,23 @@ class GlyphArc3Agent:
         }
         # Bonus routes receive only a small, capped preference after passing the
         # evidence and completion-risk gate. They cannot manufacture legal actions.
+        route = dynamics.get("minimum_step_route", {})
+        route_signature = route.get("first_action_signature") if route.get("status") == "route_found" else None
         for row in action_scores:
             bonus = viable_bonus.get(row["action_signature"])
             if bonus:
                 normalized_gain = bonus["net_gain"] / (1.0 + abs(bonus["net_gain"]))
                 row["factors"]["bonus_preference"] = round(0.05 * normalized_gain, 6)
-                row["factors"]["utility_score"] = round(
-                    row["factors"]["utility_score"] + row["factors"]["bonus_preference"], 6
-                )
             else:
                 row["factors"]["bonus_preference"] = 0.0
+            # Prefer the first step of a verified shortest route only when it is
+            # still present in the current legal action set.
+            row["factors"]["observed_route_preference"] = 0.10 if row["action_signature"] == route_signature else 0.0
+            row["factors"]["utility_score"] = round(
+                row["factors"]["utility_score"]
+                + row["factors"]["bonus_preference"]
+                + row["factors"]["observed_route_preference"], 6
+            )
         action_scores.sort(key=lambda row: (-row["factors"]["utility_score"], row["index"]))
         if action_scores:
             selected_signature = action_scores[0]["action_signature"]
