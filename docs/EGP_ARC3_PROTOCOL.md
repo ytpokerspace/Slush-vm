@@ -99,6 +99,18 @@ Example override:
 
 Validation requires OBSERVE before reasoning, SELECT before ACT/UNDO, and VERIFY after an action before MEMORIZE. This prevents a predicted result from being silently stored as an observed outcome.
 
+## Environment execution runtime
+
+`arc3.egp_runtime.EGPEnvironmentRuntime` is the explicit bridge from a selected EGP action to the ARC environment. The runner uses it only when `--policy glyph` is selected; legacy policy behavior is unchanged. The bridge:
+
+1. Confirms the selected action is present in the environment's current legal action list.
+2. Confirms the selected action record names that same legal action.
+3. Passes structured coordinates/data for complex actions, using a fallback only when the runner explicitly supplies one.
+4. Calls the environment's `step` method exactly once.
+5. Returns the actual environment observation unchanged and records an execution trace for reporting.
+
+A missing observation is not treated as a verified transition. The runner verifies the returned frame, records the observed transition, updates gameplay memory, checks terminal state, and then plans again from the new observation. The runtime does not fabricate actions, bypass the legal-action list, or assume undocumented mechanics. The host environment remains responsible for rendering and game rules.
+
 ## Dynamic rendering
 
 `render_protocol(context)` produces:
