@@ -7,6 +7,7 @@ completion-risk evidence; unknown semantics are not treated as a bonus.
 """
 from __future__ import annotations
 
+from collections import deque
 from copy import deepcopy
 from dataclasses import dataclass, field
 from math import hypot
@@ -187,6 +188,61 @@ class GameDynamicsMemory:
             })
         return rows
 
+    def shortest_observed_route(
+        self, observation: Any, world_model: Any,
+    ) -> dict[str, Any]:
+        """Find the fewest-step route to a previously observed progress/win state.
+
+        This is exact BFS over the bounded observed transition graph only. It does
+        not invent edges or claim an optimal route through unobserved game states.
+        """
+        start = state_signature(observation)
+        adjacency: dict[str, list[dict[str, Any]]] = {}
+        goals: set[str] = set()
+        for event in getattr(world_model, "transition_history", []):
+            before = event.get("before_state")
+            after = event.get("after_state")
+            action = event.get("action")
+            if not isinstance(before, str) or not isinstance(after, str) or action is None:
+                continue
+            adjacency.setdefault(before, []).append({
+                "after_state": after,
+                "action_signature": action_signature(action),
+                "action": deepcopy(action),
+            })
+            if event.get("explicit_progress_observed") or event.get("terminal_win_observed"):
+                goals.add(after)
+        if not goals:
+            return {
+                "status": "no_observed_progress_route",
+                "known_edges": sum(len(edges) for edges in adjacency.values()),
+                "optimality_scope": "observed_transition_graph_only",
+            }
+        queue = deque([(start, [])])
+        visited = {start}
+        while queue:
+            state_id, path = queue.popleft()
+            if state_id in goals:
+                return {
+                    "status": "route_found",
+                    "shortest_observed_steps": len(path),
+                    "first_action_signature": path[0]["action_signature"] if path else None,
+                    "path": path,
+                    "known_edges": sum(len(edges) for edges in adjacency.values()),
+                    "optimality_scope": "shortest_path_within_bounded_observed_transition_graph",
+                }
+            for edge in adjacency.get(state_id, []):
+                successor = edge["after_state"]
+                if successor in visited:
+                    continue
+                visited.add(successor)
+                queue.append((successor, path + [edge]))
+        return {
+            "status": "no_observed_progress_route",
+            "known_edges": sum(len(edges) for edges in adjacency.values()),
+            "optimality_scope": "observed_transition_graph_only",
+        }
+
     def analyze(
         self,
         tracks: dict[str, Any] | None,
@@ -195,18 +251,21 @@ class GameDynamicsMemory:
         observation: Any = None,
         legal_actions: list[Any] | None = None,
         transition_model: Any = None,
+        world_model: Any = None,
     ) -> dict[str, Any]:
         self.decisions += 1
         dynamics = self.predict_object_positions(tracks, motion_forecast)
         action_predictions = self.predict_action_outcomes(
             observation, legal_actions or [], transition_model
         ) if observation is not None else []
+        route = self.shortest_observed_route(observation, world_model) if observation is not None and world_model is not None else {"status": "not_evaluated"}
         bonuses = self.evaluate_bonus_candidates(bonus_candidates)
         viable = [row for row in bonuses if row.get("status") == "viable"]
         return {
             "decision": self.decisions,
             "object_dynamics": dynamics,
             "action_conditioned_predictions": action_predictions,
+            "minimum_step_route": route,
             "bonus_evaluations": bonuses,
             "viable_bonus_action_signatures": [row["action_signature"] for row in viable],
             "bonus_policy": "pursue only evidenced positive net gain with no reduction in completion probability",
