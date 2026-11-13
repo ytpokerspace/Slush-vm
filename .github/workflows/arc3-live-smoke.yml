@@ -8,15 +8,15 @@ on:
         required: true
         default: false
         type: boolean
-      game_id:
-        description: "ARC-AGI-3 game id"
+      games:
+        description: "Comma-separated public game IDs (default: three anonymously available games)"
         required: true
-        default: "ls20"
+        default: "ls20,ft09,vc33"
         type: string
       max_actions:
         description: "Maximum actions per episode for multi-object visual goal hypotheses"
         required: true
-        default: "64"
+        default: "24"
         type: string
       seeds:
         description: "Comma-separated seeds"
@@ -43,15 +43,22 @@ jobs:
           python -m pip install "git+https://github.com/arcprize/ARC-AGI.git"
       - name: Run bounded multi-seed live benchmark with visual target navigation
         env:
-          GAME_ID: ${{ inputs.game_id || 'ls20' }}
+          GAMES: ${{ inputs.games || 'ls20,ft09,vc33' }}
           MAX_ACTIONS: ${{ inputs.max_actions || '64' }}
           SEEDS: ${{ inputs.seeds || '0,1,2' }}
         run: |
           set -e
-          if [[ "$GAME_ID" == *","* ]]; then
-            echo "Provide one game ID per run."
+          IFS=',' read -ra GAME_LIST <<< "$GAMES"
+          if (( ${#GAME_LIST[@]} < 1 || ${#GAME_LIST[@]} > 25 )); then
+            echo "Provide between one and 25 game IDs."
             exit 2
           fi
+          for game in "${GAME_LIST[@]}"; do
+            if ! [[ "$game" =~ ^[a-z0-9]{4}$ ]]; then
+              echo "Invalid game ID: $game"
+              exit 2
+            fi
+          done
           if ! [[ "$MAX_ACTIONS" =~ ^[0-9]+$ ]] || (( MAX_ACTIONS < 1 || MAX_ACTIONS > 256 )); then
             echo "max_actions must be an integer from 1 to 256."
             exit 2
@@ -69,13 +76,13 @@ jobs:
           done
           set +e
           python -m arc3.benchmark \
-            --games "$GAME_ID" \
+            --games "$GAMES" \
             --seeds "$SEEDS" \
             --max-actions "$MAX_ACTIONS" \
             --policies legacy,glyph \
             --click-strategy foreground \
             --max-click-points 16 \
-            --run-timeout 180 \
+            --run-timeout 60 \
             --save-recording \
             --output arc3-benchmark.json > arc3-benchmark-console.log 2>&1
           status=$?
