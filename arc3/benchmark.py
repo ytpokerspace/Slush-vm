@@ -53,6 +53,66 @@ def summarize_results(results: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def summarize_policy_comparison(results: list[dict[str, Any]]) -> dict[str, Any]:
+    """Summarize each policy and paired differences on identical game/seed runs."""
+    policies = sorted({str(row.get("policy", "legacy")) for row in results})
+    by_policy = {
+        policy: summarize_results([row for row in results if row.get("policy", "legacy") == policy])
+        for policy in policies
+    }
+    paired = []
+    keys = sorted({
+        (row.get("game_id"), row.get("seed"))
+        for row in results if row.get("game_id") is not None and row.get("seed") is not None
+    }, key=lambda item: (str(item[0]), int(item[1])))
+    indexed = {
+        (row.get("policy", "legacy"), row.get("game_id"), row.get("seed")): row
+        for row in results
+    }
+    if "legacy" in policies and "glyph" in policies:
+        for game_id, seed in keys:
+            baseline = indexed.get(("legacy", game_id, seed))
+            candidate = indexed.get(("glyph", game_id, seed))
+            if not baseline or not candidate:
+                continue
+            valid = not baseline.get("error") and not candidate.get("error")
+            paired.append({
+                "game_id": game_id,
+                "seed": seed,
+                "valid_pair": valid,
+                "legacy_won": baseline.get("won"),
+                "glyph_won": candidate.get("won"),
+                "legacy_steps": baseline.get("steps"),
+                "glyph_steps": candidate.get("steps"),
+                "glyph_minus_legacy_steps": (
+                    int(candidate["steps"]) - int(baseline["steps"]) if valid else None
+                ),
+                "legacy_levels_completed": baseline.get("levels_completed"),
+                "glyph_levels_completed": candidate.get("levels_completed"),
+            })
+    valid_pairs = [row for row in paired if row["valid_pair"]]
+    return {
+        "policies": by_policy,
+        "paired_comparisons": paired,
+        "paired_summary": {
+            "pairs_requested": len(paired),
+            "pairs_valid": len(valid_pairs),
+            "glyph_wins_not_legacy": sum(
+                row["glyph_won"] is True and row["legacy_won"] is not True
+                for row in valid_pairs
+            ),
+            "legacy_wins_not_glyph": sum(
+                row["legacy_won"] is True and row["glyph_won"] is not True
+                for row in valid_pairs
+            ),
+            "mean_glyph_minus_legacy_steps": (
+                sum(row["glyph_minus_legacy_steps"] for row in valid_pairs)
+                / len(valid_pairs) if valid_pairs else None
+            ),
+        },
+    }
+
+
 def run_episode(
     game_id: str,
     seed: int,
@@ -61,10 +121,12 @@ def run_episode(
     max_click_points: int,
     save_recording: bool,
     timeout_seconds: int,
+    policy: str = "legacy",
 ) -> dict[str, Any]:
     command = [
         sys.executable, "-m", "arc3.arc_agi_runner",
         "--game-id", game_id,
+        "--policy", policy,
         "--seed", str(seed),
         "--max-actions", str(max_actions),
         "--click-strategy", click_strategy,
@@ -91,6 +153,7 @@ def run_episode(
             "runner_exit_code": completed.returncode,
         }
     result["runner_exit_code"] = completed.returncode
+    result["policy"] = policy
     if completed.returncode != 0:
         result["error"] = (completed.stderr or "runner returned nonzero exit status").strip()[-2000:]
     return result
@@ -105,6 +168,8 @@ def main() -> int:
     parser.add_argument("--max-click-points", type=int, default=16)
     parser.add_argument("--run-timeout", type=int, default=180)
     parser.add_argument("--save-recording", action="store_true")
+    parser.add_argument("--policies", default="legacy,glyph",
+                        help="Comma-separated policies to compare on identical game/seed pairs")
     parser.add_argument("--output", default="arc3-benchmark.json")
     args = parser.parse_args()
     if args.max_actions < 1 or args.max_click_points < 1 or args.run_timeout < 1:
@@ -115,23 +180,31 @@ def main() -> int:
         seeds = [int(part.strip()) for part in args.seeds.split(",") if part.strip()]
     except ValueError:
         parser.error("--seeds must be comma-separated integers")
-    if not games or not seeds:
-        parser.error("--games and --seeds must each contain at least one value")
+    policies = [part.strip() for part in args.policies.split(",") if part.strip()]
+    if not games or not seeds or not policies:
+        parser.error("--games, --seeds, and --policies must each contain at least one value")
+    if len(set(policies)) != len(policies) or any(p not in {"legacy", "glyph"} for p in policies):
+        parser.error("--policies accepts each of: legacy, glyph (no duplicates)")
 
     results = []
     for game_id in games:
         for seed in seeds:
-            result = run_episode(
-                game_id, seed, args.max_actions, args.click_strategy,
-                args.max_click_points, args.save_recording, args.run_timeout,
-            )
-            results.append(result)
-            print(json.dumps(result, ensure_ascii=False), flush=True)
+            for policy in policies:
+                result = run_episode(
+                    game_id, seed, args.max_actions, args.click_strategy,
+                    args.max_click_points, args.save_recording, args.run_timeout,
+                    policy=policy,
+                )
+                result.setdefault("policy", policy)
+                results.append(result)
+                print(json.dumps(result, ensure_ascii=False), flush=True)
 
     report = summarize_results(results)
+    comparison = summarize_policy_comparison(results)
     report.update({
         "created_at": datetime.now(timezone.utc).isoformat(),
-        "policy": "UPI-ARC3 cognitive agent with evidence-bounded state/action learning",
+        "policy": policies,
+        "comparison": comparison,
         "click_strategy": args.click_strategy,
         "max_actions_per_run": args.max_actions,
         "games": games,
