@@ -30,6 +30,14 @@ class TransitionLearnerTests(unittest.TestCase):
         learner.observe({"name": "ACTION1"}, {"frame": [[0, 1]]}, {"frame": [[0, 2]]})
         self.assertEqual(learner.predict({"name": "ACTION1"}, {"frame": [[0, 3]]}), [])
 
+    def test_layered_frame_template(self):
+        learner = TransitionLearner()
+        before = {"frame": [[[0, 1]], [[2, 0]]]}
+        after = {"frame": [[[0, 3]], [[2, 0]]]}
+        self.assertTrue(learner.observe({"name": "ACTION1"}, before, after))
+        prediction = learner.predict({"name": "ACTION1"}, before)
+        self.assertEqual(prediction[0]["observation"]["frame"][0][0][1], 3)
+
 class BeliefMctsTests(unittest.TestCase):
     def test_root_action_is_legal(self):
         world, obs = WorldModel(), {"frame": [[0, 1]]}
