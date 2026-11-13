@@ -130,7 +130,14 @@ def candidate_click_points(
         for cell in row[:64]
         if cell is not None
     )
-    background = {color for color, _ in color_counts.most_common(3)}
+    # Tiny synthetic grids and single-color frames do not contain enough
+    # evidence to infer a background palette; preserve the legacy nonzero-cell
+    # behavior there. The filter activates for full-size, multi-color game frames.
+    cell_count = sum(color_counts.values())
+    background = (
+        {color for color, _ in color_counts.most_common(3)}
+        if cell_count >= 256 and len(color_counts) >= 4 else set()
+    )
 
     points: list[tuple[int, int]] = []
     seen: set[tuple[int, int]] = set()
