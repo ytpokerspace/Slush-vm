@@ -4,7 +4,7 @@ from collections import defaultdict
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any
-from arc3.world_model import action_family, canonical_json, state_signature
+from arc3.world_model import action_family, action_signature, canonical_json, state_signature
 
 def _layers(observation: Any):
     if not isinstance(observation, dict):
@@ -57,9 +57,11 @@ class TransitionLearner:
         if not changes:
             return False
         family = action_family(action)
+        if isinstance(action, dict) and "data" in action:
+            family = canonical_json([family, action.get("data")])
         shape = tuple((len(layer), len(layer[0]) if layer else 0) for layer in old)
         rule = GridRule(shape, changes)
-        key = canonical_json([(c.y, c.x, c.before, c.after) for c in changes])
+        key = canonical_json([(c.layer, c.y, c.x, c.before, c.after) for c in changes])
         previous = self.rules[family].get(key)
         self.rules[family][key] = (rule, previous[1] + 1 if previous else 1)
         self.observed_pairs += 1
@@ -74,7 +76,10 @@ class TransitionLearner:
             return []
         shape = tuple((len(layer), len(layer[0]) if layer else 0) for layer in layers)
         matches = []
-        for rule, count in self.rules.get(action_family(action), {}).values():
+        family = action_family(action)
+        if isinstance(action, dict) and "data" in action:
+            family = canonical_json([family, action.get("data")])
+        for rule, count in self.rules.get(family, {}).values():
             if rule.shape == shape and all(
                 layers[c.layer][c.y][c.x] == c.before for c in rule.changes
             ):
