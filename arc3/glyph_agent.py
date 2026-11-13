@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any
 from arc3.belief_mcts import BeliefMCTS
 from arc3.action_glyph_scorer import ActionProbabilityScorer
+from arc3.game_dynamics_memory import GameDynamicsMemory
 from arc3.glyph_dsl import DEFAULT_PROGRAM, compile_program, parse_program, render_protocol, validate_program
 from arc3.strategy_studio import brainstorm_action_priors
 from arc3.transition_learner import TransitionLearner
@@ -19,6 +20,7 @@ class GlyphArc3Agent:
     transition_model: TransitionLearner = field(default_factory=TransitionLearner)
     decisions: int = 0
     action_scorer: ActionProbabilityScorer = field(default_factory=ActionProbabilityScorer)
+    dynamics_memory: GameDynamicsMemory = field(default_factory=GameDynamicsMemory)
     last_diagnostics: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
@@ -26,7 +28,8 @@ class GlyphArc3Agent:
         validate_program(self.program)
 
     def select_action(self, observation: Any, legal_actions: list[Any],
-                      navigation: dict[str, Any] | None = None) -> dict[str, Any]:
+                      navigation: dict[str, Any] | None = None,
+                      dynamics_context: dict[str, Any] | None = None) -> dict[str, Any]:
         observed = self.world_model.observe(observation)
         self.world_model.register_legal_actions(observation, legal_actions)
         if not legal_actions:
@@ -40,12 +43,35 @@ class GlyphArc3Agent:
             observation, legal_actions, self.world_model, studio["priors"],
             result.get("diagnostics", {}).get("top_candidates", []),
         )
+        dynamics_context = dynamics_context or {}
+        dynamics = self.dynamics_memory.analyze(
+            dynamics_context.get("object_tracks"),
+            dynamics_context.get("motion_forecast"),
+            dynamics_context.get("bonus_candidates"),
+        )
+        viable_bonus = {
+            row["action_signature"]: row
+            for row in dynamics["bonus_evaluations"]
+            if row.get("status") == "viable"
+        }
+        # Bonus routes receive only a small, capped preference after passing the
+        # evidence and completion-risk gate. They cannot manufacture legal actions.
+        for row in action_scores:
+            bonus = viable_bonus.get(row["action_signature"])
+            if bonus:
+                normalized_gain = bonus["net_gain"] / (1.0 + abs(bonus["net_gain"]))
+                row["factors"]["bonus_preference"] = round(0.05 * normalized_gain, 6)
+                row["factors"]["utility_score"] = round(
+                    row["factors"]["utility_score"] + row["factors"]["bonus_preference"], 6
+                )
+            else:
+                row["factors"]["bonus_preference"] = 0.0
+        action_scores.sort(key=lambda row: (-row["factors"]["utility_score"], row["index"]))
         if action_scores:
             selected_signature = action_scores[0]["action_signature"]
             result["action"] = next(
                 action for action in legal_actions
-                if action_signature(action)
-                == selected_signature
+                if action_signature(action) == selected_signature
             )
         self.decisions += 1
         self.last_diagnostics = {
@@ -62,6 +88,7 @@ class GlyphArc3Agent:
             }),
             "strategy_studio": studio, "belief_mcts": result.get("diagnostics", {}),
             "action_probability_scores": action_scores,
+            "game_dynamics_memory": dynamics,
             "selected_action_glyph": action_scores[0] if action_scores else None,
             "transition_learner": self.transition_model.snapshot(),
         }
@@ -77,5 +104,6 @@ class GlyphArc3Agent:
     def snapshot(self):
         return {"decisions": self.decisions, "world_model": self.world_model.snapshot(),
                 "transition_model": self.transition_model.snapshot(),
+                "game_dynamics_memory": self.dynamics_memory.snapshot(),
                 "last_decision": self.last_diagnostics,
                 "policy": "emoji DSL + strategy priors + belief MCTS"}
