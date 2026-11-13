@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - feat/arc3-glyph-belief-engine
+      - fix/arc3-click-targeting
     paths:
       - .github/workflows/arc3-live-smoke.yml
   workflow_dispatch:
