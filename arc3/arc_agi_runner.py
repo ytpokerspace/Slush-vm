@@ -134,6 +134,7 @@ def candidate_click_points(
 
     points: list[tuple[int, int]] = []
     seen: set[tuple[int, int]] = set()
+    navigation_target: tuple[int, int] | None = None
     for layer in layers:
         if not isinstance(layer, list):
             continue
@@ -157,9 +158,11 @@ def candidate_click_points(
             except (TypeError, ValueError):
                 pass
             else:
-                if 0 <= tx < 64 and 0 <= ty < 64 and (tx, ty) not in seen:
-                    points.insert(0, (tx, ty))
-                    seen.add((tx, ty))
+                if 0 <= tx < 64 and 0 <= ty < 64:
+                    navigation_target = (tx, ty)
+                    if navigation_target not in seen:
+                        points.insert(0, navigation_target)
+                        seen.add(navigation_target)
 
     if not points:
         return [{"x": center_x, "y": center_y}]
@@ -189,16 +192,26 @@ def candidate_click_points(
                             and cell not in background and cell not in (0, "0", None)):
                         changed.append((x, y))
         if changed:
-            points = list(dict.fromkeys(changed + [p for p in points if p in seen and navigation and p == tuple(navigation.get("target_center", ())) ]))
+            points = list(dict.fromkeys(changed))
+            if navigation_target is not None and navigation_target not in points:
+                points.insert(0, navigation_target)
 
     # Evenly sample the discovered positions so large foreground areas don't
     # exhaust the action budget on adjacent cells.
     if len(points) > max_points:
-        if max_points == 1:
-            points = [points[len(points) // 2]]
+        # Keep a navigation-derived target first; sample the remaining foreground
+        # points across the scene without allowing the target to be dropped.
+        priority = points[0] if navigation_target is not None and points[0] == navigation_target else None
+        pool = points[1:] if priority is not None else points
+        remaining = max_points - (1 if priority is not None else 0)
+        if remaining <= 0:
+            points = [priority]
+        elif remaining == 1:
+            points = ([priority] if priority is not None else []) + [pool[len(pool) // 2]]
         else:
-            indices = [round(i * (len(points) - 1) / (max_points - 1)) for i in range(max_points)]
-            points = [points[i] for i in indices]
+            indices = [round(i * (len(pool) - 1) / (remaining - 1)) for i in range(remaining)]
+            sampled = [pool[i] for i in indices]
+            points = ([priority] if priority is not None else []) + sampled
     return [{"x": x, "y": y} for x, y in points]
 
 
