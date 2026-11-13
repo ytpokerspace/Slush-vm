@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 from arc3.belief_mcts import BeliefMCTS
-from arc3.glyph_dsl import DEFAULT_PROGRAM, parse_program, validate_program
+from arc3.glyph_dsl import DEFAULT_PROGRAM, compile_program, parse_program, render_protocol, validate_program
 from arc3.strategy_studio import brainstorm_action_priors
 from arc3.transition_learner import TransitionLearner
 from arc3.world_model import WorldModel
@@ -37,6 +37,15 @@ class GlyphArc3Agent:
         self.last_diagnostics = {
             "decision": self.decisions, "state_id": observed["state_id"],
             "dsl_operations": [item.operation for item in self.program.instructions],
+            "dsl_compiled": compile_program(self.program),
+            "glyph_protocol": render_protocol({
+                "grid_shape": observed.get("shape"),
+                "legal_action_count": len(legal_actions),
+                "selected_action": result.get("action", {}).get("name") if isinstance(result.get("action"), dict) else None,
+                "object_count": len(observed.get("objects", [])) if isinstance(observed.get("objects"), list) else None,
+                "mcts_depth": self.depth, "mcts_simulations": self.simulations,
+                "outcome": "pending",
+            }),
             "strategy_studio": studio, "belief_mcts": result.get("diagnostics", {}),
             "transition_learner": self.transition_model.snapshot(),
         }
