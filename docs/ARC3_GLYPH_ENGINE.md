@@ -20,7 +20,7 @@ Public sources:
 - https://link.springer.com/article/10.1007/s11081-024-09896-2
 - https://mitpress.mit.edu/9780262047012/algorithms-for-decision-making/
 
-## Glyph vocabulary
+## Glyph vocabulary (legacy core subset)\n\nThe complete typed Emoji Glyph Protocol, including orientation, physics, attention, beam search, parallelism, reward/risk, and hierarchical memory, is specified in [EGP_ARC3_PROTOCOL.md](EGP_ARC3_PROTOCOL.md).
 
 | Glyph | Canonical operation | Meaning |
 |---|---|---|
@@ -43,7 +43,7 @@ Emoji are readable aliases only. Canonical operation names and typed Python cont
 
 ## Architecture
 
-1. arc3/glyph_dsl.py parses and validates the glyph program. It does not call the game environment.
+1. arc3/glyph_dsl.py parses, validates, compiles typed defaults, and dynamically renders EGP instructions. Registered handlers are required for execution; the DSL does not call the game environment by itself.
 2. arc3/transition_learner.py learns exact-coordinate grid edit templates from observed before/after pairs. Predictions require matching preconditions and remain labeled predictions.
 3. arc3/belief_mcts.py searches only actions supplied as legal at the root. Predicted outcomes are one-step leaf estimates; deeper rollout uses observed transitions only.
 4. arc3/glyph_agent.py connects the existing strategy-prior generator, world model, transition learner and belief MCTS.
@@ -54,7 +54,7 @@ Emoji are readable aliases only. Canonical operation names and typed Python cont
 - The transition learner supports one 2-D grid, not layered frames.
 - Exact-coordinate templates may not generalize to moving or translated objects.
 - Predicted leaf values are heuristic estimates, not calibrated win probabilities.
-- The new agent still needs wiring into the official SDK runner.
+- The glyph agent exposes compiled instructions and a context-sensitive protocol rendering in diagnostics. Not every EGP operation is yet wired to a dedicated execution handler.
 - Benchmark performance and action efficiency have not been measured.
 - No live benchmark, paid inference, or private-set evaluation is performed by the unit tests.
 
