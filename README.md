@@ -43,6 +43,8 @@ The validator uses only the Python standard library. It checks required fields a
 
 ## ARC-AGI-3 emoji glyph engine (experimental)
 
+**Builder:** William Gunnell Cox.
+
 The new ARC3 glyph engine combines a typed emoji DSL, evidence-tagged grid transition templates, existing strategy priors, and bounded belief-aware MCTS. It is available as an opt-in runner policy:
 
 ~~~sh
