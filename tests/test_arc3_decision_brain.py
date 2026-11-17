@@ -60,5 +60,22 @@ class ProgressAwareStrategyTests(unittest.TestCase):
         self.assertGreater(repeated["factors"]["repeat_penalty"], 0)
 
 
+    def test_progress_or_win_count_never_double_counts_one_attempt(self):
+        model = WorldModel()
+        action = {"name": "ACTION6", "data": {"x": 2, "y": 3}}
+        before = {"__arc3_levels_completed": 0}
+        after = {"__arc3_levels_completed": 1, "__arc3_state": "WIN"}
+        model.record_transition(action, before, after)
+        model.record_transition(action, after, after)
+
+        # Progress and terminal win on one transition are one successful attempt.
+        scores = ActionProbabilityScorer().score(after, [action], model)
+        probability = scores[0]["probability"]
+        self.assertEqual(probability["evidence_attempts"], 2)
+        self.assertLessEqual(probability["verified_progress_or_win_count"], 2)
+        self.assertLessEqual(probability["verified_progress_or_win"], 1.0)
+
+
+
 if __name__ == "__main__":
     unittest.main()
