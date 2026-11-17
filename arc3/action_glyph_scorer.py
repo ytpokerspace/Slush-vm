@@ -87,9 +87,9 @@ class ActionProbabilityScorer:
             family = world_model.action_stats(action)
             exact_history = world_model.action_signature_stats(action)
             family_attempts = int(family.get("attempts", 0))
-            family_progress = int(family.get("explicit_progress", 0)) + int(family.get("terminal_wins", 0))
+            family_progress = min(family_attempts, int(family.get("explicit_progress", 0)) + int(family.get("terminal_wins", 0)))
             exact_attempts = int(exact_history.get("attempts", 0))
-            exact_progress = int(exact_history.get("explicit_progress", 0)) + int(exact_history.get("terminal_wins", 0))
+            exact_progress = min(exact_attempts, int(exact_history.get("explicit_progress", 0)) + int(exact_history.get("terminal_wins", 0)))
             # Exact action history includes click coordinates and survives changing
             # screen states; family history generalizes across coordinates.
             if exact_attempts:
