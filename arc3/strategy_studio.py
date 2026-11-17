@@ -36,7 +36,10 @@ def brainstorm_action_priors(
         signature = action_signature(action)
         family = action_family(action)
         stats = world_model.action_stats(action)
+        signature_stats = world_model.action_signature_stats(action)
         attempts = int(stats.get("attempts", 0))
+        signature_attempts = int(signature_stats.get("attempts", 0))
+        signature_progress = int(signature_stats.get("explicit_progress", 0)) + int(signature_stats.get("terminal_wins", 0))
         unchanged = int(stats.get("unchanged", 0))
         progress = int(stats.get("explicit_progress", 0))
         wins = int(stats.get("terminal_wins", 0))
@@ -56,8 +59,21 @@ def brainstorm_action_priors(
         if wins:
             score += min(0.50, 0.25 * wins)
             evidence.append("action family has observed terminal wins")
+        if attempts == 0:
+            score += 0.30
+            evidence.append("action family has not yet been tested this episode")
+        elif progress == 0 and wins == 0:
+            penalty = min(0.30, 0.075 * attempts)
+            score -= penalty
+            evidence.append("action family has repeated without confirmed progress")
+        if signature_attempts == 0:
+            score += 0.12
+            evidence.append("exact action or click location is untested")
+        elif signature_progress == 0:
+            score -= min(0.36, 0.30 * signature_attempts)
+            evidence.append("exact action or click location was tried without confirmed progress")
         if untried_here:
-            score += 0.18
+            score += 0.08
             evidence.append("not yet tried in this exact state")
         if attempts >= 2 and unchanged / attempts >= 0.75:
             score -= 0.25
