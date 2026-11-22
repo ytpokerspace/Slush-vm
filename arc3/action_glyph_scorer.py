@@ -59,7 +59,7 @@ def encode_action(action_record: dict[str, Any]) -> dict[str, Any]:
 
 @dataclass
 class ActionProbabilityScorer:
-    """Score legal actions from exact-edge outcomes, family history and priors."""
+    """Score legal actions using state-local outcomes before broader history."""
 
     alpha: float = 1.0
     beta: float = 1.0
@@ -84,54 +84,81 @@ class ActionProbabilityScorer:
         for index, action in enumerate(action_records):
             signature = action_signature(action)
             edge = world_model.edge_stats_by_ids(state_id, action)
+            edge_attempts = int(edge.get("attempts", 0))
             family = world_model.action_stats(action)
             exact_history = world_model.action_signature_stats(action)
             family_attempts = int(family.get("attempts", 0))
-            family_progress = min(family_attempts, int(family.get("explicit_progress", 0)) + int(family.get("terminal_wins", 0)))
+            family_progress = min(
+                family_attempts,
+                int(family.get("explicit_progress", 0)) + int(family.get("terminal_wins", 0)),
+            )
             exact_attempts = int(exact_history.get("attempts", 0))
-            exact_progress = min(exact_attempts, int(exact_history.get("explicit_progress", 0)) + int(exact_history.get("terminal_wins", 0)))
-            # Exact action history includes click coordinates and survives changing
-            # screen states; family history generalizes across coordinates.
-            if exact_attempts:
+            exact_progress = min(
+                exact_attempts,
+                int(exact_history.get("explicit_progress", 0)) + int(exact_history.get("terminal_wins", 0)),
+            )
+
+            # Prefer evidence for this exact state/action edge. Episode-wide
+            # history is a fallback, never a replacement for observed local data.
+            if edge_attempts:
+                attempts = edge_attempts
+                progress = int(edge.get("verified_progress_or_win", 0))
+                changed = int(edge.get("changed", 0))
+                wins = int(edge.get("terminal_wins", 0))
+                evidence_scope = "exact_state_action"
+                repeat_attempts = edge_attempts
+                repeat_progress = progress
+                stagnation_attempts = edge_attempts
+                stagnation_progress = progress
+            elif exact_attempts:
                 attempts = exact_attempts
                 progress = exact_progress
                 changed = int(exact_history.get("changed", 0))
                 wins = int(exact_history.get("terminal_wins", 0))
                 evidence_scope = "exact_action_history"
+                repeat_attempts = exact_attempts
+                repeat_progress = exact_progress
+                stagnation_attempts = family_attempts
+                stagnation_progress = family_progress
             elif family_attempts:
                 attempts = family_attempts
                 progress = family_progress
                 changed = int(family.get("changed", 0))
                 wins = int(family.get("terminal_wins", 0))
                 evidence_scope = "action_family"
+                repeat_attempts = 0
+                repeat_progress = 0
+                stagnation_attempts = family_attempts
+                stagnation_progress = family_progress
             else:
-                attempts = int(edge.get("attempts", 0))
-                progress = int(edge.get("verified_progress_or_win", 0))
-                changed = int(edge.get("changed", 0))
-                wins = int(edge.get("terminal_wins", 0))
-                evidence_scope = "exact_state_action"
+                attempts = 0
+                progress = 0
+                changed = 0
+                wins = 0
+                evidence_scope = "prior_only"
+                repeat_attempts = 0
+                repeat_progress = 0
+                stagnation_attempts = 0
+                stagnation_progress = 0
+
             p_progress = (progress + self.alpha) / (attempts + self.alpha + self.beta)
             p_change = (changed + self.alpha) / (attempts + self.alpha + self.beta)
-            # Reward trying new legal actions/coordinates. A changed screen alone
-            # is weak evidence and cannot outweigh repeated lack of progress.
             information_bonus = (
                 self.exploration_weight / math.sqrt(exact_attempts + 1)
                 + 0.12 / math.sqrt(family_attempts + 1)
             )
             stagnation_penalty = (
-                min(0.30, 0.075 * family_attempts)
-                if family_attempts >= 2 and family_progress == 0 else 0.0
+                min(0.30, 0.075 * stagnation_attempts)
+                if stagnation_attempts >= 2 and stagnation_progress == 0 else 0.0
             )
             repeat_penalty = (
-                min(0.36, 0.30 * exact_attempts)
-                if exact_attempts >= 1 and exact_progress == 0 else 0.0
+                min(0.36, 0.30 * repeat_attempts)
+                if repeat_attempts >= 1 and repeat_progress == 0 else 0.0
             )
             strategy_prior = max(0.0, float(strategy_priors.get(signature, 0.0)))
             mcts = mcts_by_signature.get(signature, {})
             mcts_value = float(mcts.get("mean_value", 0.5))
             mcts_visits = int(mcts.get("visits", 0))
-            # Ranking utility is a transparent weighted heuristic. The separate
-            # posterior fields remain interpretable and are not called win odds.
             utility = (
                 0.65 * p_progress
                 + 0.05 * p_change
@@ -166,6 +193,7 @@ class ActionProbabilityScorer:
                     "exact_action_attempts": exact_attempts,
                     "family_confirmed_progress": family_progress,
                     "exact_action_confirmed_progress": exact_progress,
+                    "state_action_attempts": edge_attempts,
                     "utility_score": round(utility, 6),
                 },
             })
