@@ -86,9 +86,10 @@ class ProgressAwareStrategyTests(unittest.TestCase):
 
         result = agent.select_action(observation, [action])
         candidate = result["diagnostics"]["strategy_studio"]["candidates"][0]
+        evidence = candidate["evidence"]
         self.assertEqual(candidate["repeat_cost"], 0.75)
-        self.assertIn("exact action or click location was tried", candidate["evidence"])
-        self.assertNotIn("not yet tried in this exact state", candidate["evidence"])
+        self.assertTrue(any("exact action or click location was tried" in item for item in evidence))
+        self.assertFalse(any("not yet tried in this exact state" in item for item in evidence))
 
     def test_progress_or_win_is_counted_once_per_attempt(self):
         model = WorldModel()
