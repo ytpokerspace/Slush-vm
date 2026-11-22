@@ -65,3 +65,8 @@ This uses Python's standard library. See the linked specification, registry file
 **How to evaluate it:** Run the validator and project tests available in the repository. Report the environment and exact commands used. Treat performance or LLM-efficiency claims as unverified unless a reproducible benchmark and results are provided.
 
 **Attribution and license:** Copyright notice and GPL-3.0-or-later terms are in this repository's LICENSE and documentation.
+
+
+## Unified host capability runtime
+
+A new host-side capability runtime and MCP stdio server are under development in [docs/LLM_INTEGRATION.md](docs/LLM_INTEGRATION.md). It exposes ARC-2, ARC-AGI-3 action validation, QBS, Glyphic Path Memory, and CSC-LCH through fixed, typed tools. This host runtime is not yet integrated into a full SHUSH parser/bytecode VM; see the implementation-status document for the exact boundary.

@@ -1,0 +1,37 @@
+name: SHUSHOS unified capability runtime
+on:
+  push:
+    branches: [main, feat/unified-capability-runtime]
+    paths:
+      - "runtime/**"
+      - ".github/workflows/runtime.yml"
+  pull_request:
+    paths:
+      - "runtime/**"
+      - ".github/workflows/runtime.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  runtime-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out SHUSHOS
+        uses: actions/checkout@v4
+      - name: Check out ARC-2 solver at pinned source commit
+        uses: actions/checkout@v4
+        with:
+          repository: ytpokerspace/Arc-2-solver-
+          ref: eeaeaea682461596fc80ea62d09e6cc666b59a7d
+          path: arc2-source
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile runtime
+        run: python -m compileall -q runtime
+      - name: Run capability conformance tests
+        env:
+          PYTHONPATH: runtime:arc2-source
+        run: python -m unittest discover -s runtime/tests -v
