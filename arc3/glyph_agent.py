@@ -34,7 +34,19 @@ class GlyphArc3Agent:
         self.world_model.register_legal_actions(observation, legal_actions)
         if not legal_actions:
             return {"action": None, "status": "no_legal_actions", "diagnostics": {}}
-        studio = brainstorm_action_priors(legal_actions, navigation, self.world_model)
+
+        # Attempt history is scoped to the exact current state. The same legal
+        # action may be useful in another state, so episode-wide history must not
+        # mark it as already tried here.
+        attempted_signatures = {
+            action_signature(action)
+            for action in legal_actions
+            if self.world_model.edge_stats_by_ids(observed["state_id"], action).get("attempts", 0) > 0
+        }
+        studio = brainstorm_action_priors(
+            legal_actions, navigation, self.world_model,
+            attempted_signatures=attempted_signatures,
+        )
         result = BeliefMCTS(
             self.world_model, self.transition_model, self.simulations, self.depth,
             self.exploration, seed=self.decisions
@@ -58,8 +70,6 @@ class GlyphArc3Agent:
             for row in dynamics["bonus_evaluations"]
             if row.get("status") == "viable"
         }
-        # Bonus routes receive only a small, capped preference after passing the
-        # evidence and completion-risk gate. They cannot manufacture legal actions.
         route = dynamics.get("minimum_step_route", {})
         route_signature = route.get("first_action_signature") if route.get("status") == "route_found" else None
         for row in action_scores:
@@ -69,8 +79,6 @@ class GlyphArc3Agent:
                 row["factors"]["bonus_preference"] = round(0.05 * normalized_gain, 6)
             else:
                 row["factors"]["bonus_preference"] = 0.0
-            # Prefer the first step of a verified shortest route only when it is
-            # still present in the current legal action set.
             row["factors"]["observed_route_preference"] = 0.10 if row["action_signature"] == route_signature else 0.0
             row["factors"]["utility_score"] = round(
                 row["factors"]["utility_score"]
